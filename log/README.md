@@ -15,3 +15,11 @@ fatal: [localhost]: FAILED! => {"changed": true, "cmd": ["dpkg-query", "--show",
 ### 参考
 
 - [mikanos-build](https://github.com/uchan-nos/mikanos-build)
+
+## ch01
+
+- `sum` コマンドを使用すると、ファイルのチェックサムを計算することができる。
+- `clang -target x86_64-pc-win32-coff -mno-red-zone -fno-stack-protector -fshort-wchar -Wall -c hello.c`
+- `lld-link /subsystem:efi_application /entry:EfiMain /out:hello.efi hello.o`
+
+- `qemu-system-x86_64 -drive if=pflash,file=$HOME/osbook/devenv/OVMF_CODE.fd -drive if=pflash,file=$HOME/osbook/devenv/OVMF_VARS.fd -hda disk.img`
