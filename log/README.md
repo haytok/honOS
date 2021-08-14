@@ -127,3 +127,23 @@ ls mnt
 cat mnt/memmap
 sudo umount mnt
 ```
+
+## ch03
+
+- Kernel のコンパイルとオブジェクトファイルのリンク
+
+```bash
+clang++ -O2 -Wall -g --target=x86_64-elf -ffreestanding -mno-red-zone -fno-exceptions -fno-rtti -std=c++17 -c main.cpp
+
+ld.lld --entry KernelMain -z norelro --image-base 0x100000 --static -o kernel.elf main.o
+```
+
+- `gEfiFileInfoGuid` を使う際には、`Loader.inf` の `Guids` にも追加で記述する必要がある。
+
+- day03 にして公開されている `run_qemu.sh` を使用することにした。
+
+```bash
+$HOME/osbook/devenv/run_qemu.sh $HOME/edk2/Build/HonoLoaderX64/DEBUG_CLANG38/X64/Loader.efi $HOME/honOS/kernel/kernel.elf
+```
+
+- `kernel.elf` が kernel ディレクトリにある C++ のプログラムをコンパイルしてリンクした結果の実行ふぁいるである。また、`Loader.efi` は、edk2 で build コマンドを実行した際に生成されるファイルである。
