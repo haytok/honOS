@@ -128,6 +128,17 @@ cat mnt/memmap
 sudo umount mnt
 ```
 
+- edk2 のセットアップ
+
+```bash
+> source edksetup.sh
+Loading previous configuration from /home/h-kiwata/edk2/Conf/BuildEnv.sh
+Using EDK2 in-source Basetools
+WORKSPACE: /home/h-kiwata/edk2
+EDK_TOOLS_PATH: /home/h-kiwata/edk2/BaseTools
+CONF_PATH: /home/h-kiwata/edk2/Conf
+```
+
 ## ch03
 
 - Kernel のコンパイルとオブジェクトファイルのリンク
@@ -146,4 +157,50 @@ ld.lld --entry KernelMain -z norelro --image-base 0x100000 --static -o kernel.el
 $HOME/osbook/devenv/run_qemu.sh $HOME/edk2/Build/HonoLoaderX64/DEBUG_CLANG38/X64/Loader.efi $HOME/honOS/kernel/kernel.elf
 ```
 
-- `kernel.elf` が kernel ディレクトリにある C++ のプログラムをコンパイルしてリンクした結果の実行ふぁいるである。また、`Loader.efi` は、edk2 で build コマンドを実行した際に生成されるファイルである。
+- `kernel.elf` が kernel ディレクトリにある C++ のプログラムをコンパイルしてリンクした結果の実行ファイルである。また、`Loader.efi` は、edk2 で build コマンドを実行した際に生成されるファイルである。
+
+- Clang の環境変数の設定
+
+```bash
+
+```
+
+## 環境のセットアップとビルドコマンド
+
+- EDK2 のセットアップ
+
+```bash
+source edksetup.sh
+```
+
+- ビルド (`$HOME/edk2` のディレクトリで実行)
+
+```bash
+build
+```
+
+- Clang の環境変数の設定
+
+```bash
+source /home/h-kiwata/osbook/devenv/buildenv.sh
+```
+
+- Kernel のコンパイルとリンク (honOS/kernel ディレクトリで実行する。)
+
+```bash
+# 前
+clang++ $CPPFLAGS -O2 -Wall -g --target=x86_64-elf -ffreestanding -mno-red-zone -fno-exceptions -fno-rtti -std=c++17 -c main.cpp
+
+ld.lld --entry KernelMain -z norelro --image-base 0x100000 --static -o kernel.elf main.o
+
+# 後
+clang++ $CPPFLAGS -O2 -Wall -g --target=x86_64-elf -fno-exceptions -ffreestanding -c main.cpp
+
+ld.lld $LDFLAGS --entry KernelMain -z norelro --image-base 0x100000 --static -o kernel.elf main.o
+```
+
+- QEMU の起動
+
+```bash
+$HOME/osbook/devenv/run_qemu.sh $HOME/edk2/Build/HonoLoaderX64/DEBUG_CLANG38/X64/Loader.efi $HOME/honOS/kernel/kernel.elf
+```
