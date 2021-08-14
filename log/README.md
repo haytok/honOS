@@ -70,3 +70,60 @@ qemu-system-x86_64 \
 -drive if=pflash,file=$HOME/osbook/devenv/OVMF_VARS.fd \
 -hda disk.img
 ```
+
+- [UEFI の仕様書](https://uefi.org/specifications)
+
+- `EFI_MEMORY_DESCRIPTOR` 構造体の定義を確認する。
+
+```bash
+> find ~/edk2/ | grep MdePkg/Include/Uefi/UefiSpec.h
+/home/h-kiwata/edk2/MdePkg/Include/Uefi/UefiSpec.h
+```
+
+```c
+///
+/// Definition of an EFI memory descriptor.
+///
+typedef struct {
+  ///
+  /// Type of the memory region.
+  /// Type EFI_MEMORY_TYPE is defined in the
+  /// AllocatePages() function description.
+  ///
+  UINT32                Type;
+  ///
+  /// Physical address of the first byte in the memory region. PhysicalStart must be
+  /// aligned on a 4 KiB boundary, and must not be above 0xfffffffffffff000. Type
+  /// EFI_PHYSICAL_ADDRESS is defined in the AllocatePages() function description
+  ///
+  EFI_PHYSICAL_ADDRESS  PhysicalStart;
+  ///
+  /// Virtual address of the first byte in the memory region.
+  /// VirtualStart must be aligned on a 4 KiB boundary,
+  /// and must not be above 0xfffffffffffff000.
+  ///
+  EFI_VIRTUAL_ADDRESS   VirtualStart;
+  ///
+  /// NumberOfPagesNumber of 4 KiB pages in the memory region.
+  /// NumberOfPages must not be 0, and must not be any value
+  /// that would represent a memory page with a start address,
+  /// either physical or virtual, above 0xfffffffffffff000.
+  ///
+  UINT64                NumberOfPages;
+  ///
+  /// Attributes of the memory region that describe the bit mask of capabilities
+  /// for that memory region, and not necessarily the current settings for that
+  /// memory region.
+  ///
+  UINT64                Attribute;
+} EFI_MEMORY_DESCRIPTOR;
+```
+
+- メモリマップを確認する。
+
+```bash
+sudo mount -o loop disk.img mnt
+ls mnt
+cat mnt/memmap
+sudo umount mnt
+```
