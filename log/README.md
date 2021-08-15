@@ -204,3 +204,15 @@ ld.lld $LDFLAGS --entry KernelMain -z norelro --image-base 0x100000 --static -o 
 ```bash
 $HOME/osbook/devenv/run_qemu.sh $HOME/edk2/Build/HonoLoaderX64/DEBUG_CLANG38/X64/Loader.efi $HOME/honOS/kernel/kernel.elf
 ```
+
+# day04
+
+- [C言語のインクルードガードはpragma onceを使う](https://kaworu.jpn.org/c/C%E8%A8%80%E8%AA%9E%E3%81%AE%E3%82%A4%E3%83%B3%E3%82%AF%E3%83%AB%E3%83%BC%E3%83%89%E3%82%AC%E3%83%BC%E3%83%89%E3%81%AFpragma_once%E3%82%92%E4%BD%BF%E3%81%86)
+
+- シンボリックリンクを貼るのに手こずった。`/home/h-kiwata/honOS/HonoLoaderPkg/Main.c` から `/home/h-kiwata/honOS/kernelframe_buffer_config.hpp` をインクルードする必要があった。したがって、`/home/h-kiwata/honOS/HonoLoaderPkg/` のディレクトリで以下のコマンドを実行する。
+
+``bash
+ln -s ../kernel/frame_buffer_config.hpp .
+```
+
+- [シンボリックリンクの作成と削除](https://qiita.com/colorrabbit/items/2e99304bd92201261c60)
