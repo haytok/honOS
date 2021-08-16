@@ -1,5 +1,6 @@
 #include <cstdint>
 #include <cstddef>
+#include <cstdio>
 
 #include "frame_buffer_config.hpp"
 #include "graphics.hpp"
@@ -40,6 +41,10 @@ extern "C" void KernelMain(const struct FrameBufferConfig& frame_buffer_config) 
   for (char c = '!'; c <= '~'; c++, i++) {
     WriteAscii(*pixel_writer, 8 * i, 50, c, {0, 0, 0});
   }
+  WriteString(*pixel_writer, 0, 66, "Hello Honos!", {0, 0, 255});
+  char buf[128];
+  sprintf(buf, "1 + 1 = %d\n", 1 + 1);
+  WriteString(*pixel_writer, 0, 82, buf, {0, 0, 255});
 
   while (1) __asm__("hlt");
 }
