@@ -180,6 +180,7 @@ build
 ```
 
 - Clang の環境変数の設定
+- day05 で Newlib の `sprintf` を実装する際にも再度実行する必要がある。
 
 ```bash
 source /home/h-kiwata/osbook/devenv/buildenv.sh
@@ -242,3 +243,12 @@ python ../tools/makefont.py -o hankaku.bin hankaku.txt
 ```bash
 objcopy -I binary -O elf64-x86-64 -B i386:x86-64 hankaku.bin hankaku.o
 ```
+
+- Clang の環境変数の設定
+- day05 で Newlib の `sprintf` を実装する際にも再度実行する必要がある。
+- 忘れやすいので注意をする。
+
+```bash
+source /home/h-kiwata/osbook/devenv/buildenv.sh
+```
+
