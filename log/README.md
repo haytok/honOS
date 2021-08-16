@@ -211,8 +211,10 @@ $HOME/osbook/devenv/run_qemu.sh $HOME/edk2/Build/HonoLoaderX64/DEBUG_CLANG38/X64
 
 - シンボリックリンクを貼るのに手こずった。`/home/h-kiwata/honOS/HonoLoaderPkg/Main.c` から `/home/h-kiwata/honOS/kernelframe_buffer_config.hpp` をインクルードする必要があった。したがって、`/home/h-kiwata/honOS/HonoLoaderPkg/` のディレクトリで以下のコマンドを実行する。
 
-``bash
+```bash
 ln -s ../kernel/frame_buffer_config.hpp .
 ```
 
 - [シンボリックリンクの作成と削除](https://qiita.com/colorrabbit/items/2e99304bd92201261c60)
+
+- [C++ autoの使いどころ・使わない方が良い場面](https://uchan.hateblo.jp/entry/2019/02/22/105622)
