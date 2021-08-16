@@ -218,3 +218,11 @@ ln -s ../kernel/frame_buffer_config.hpp .
 - [シンボリックリンクの作成と削除](https://qiita.com/colorrabbit/items/2e99304bd92201261c60)
 
 - [C++ autoの使いどころ・使わない方が良い場面](https://uchan.hateblo.jp/entry/2019/02/22/105622)
+
+- `HonoLoaderPkg` のディレクトリで `kernel/elf.hpp` のシンボリックリンクを張る。
+
+```bash
+ln -s ../kernel/elf.hpp .
+```
+
+- `elf.hpp` で定義される `Elf64_Ehdr` は、`man elf` でマニュアルを確認しながら実装すると良い。
