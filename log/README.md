@@ -226,3 +226,19 @@ ln -s ../kernel/elf.hpp .
 ```
 
 - `elf.hpp` で定義される `Elf64_Ehdr` は、`man elf` でマニュアルを確認しながら実装すると良い。
+
+# day05
+
+- フォントは以下から取得する。
+  - [東雲 ビットマップフォントファミリー](http://openlab.ring.gr.jp/efont/shinonome/)
+- 取得した hankaku.txt から hankaku.bin を作成する。
+
+```bash
+python ../tools/makefont.py -o hankaku.bin hankaku.txt
+```
+
+- hankaku.bin からオブジェクトファイル hankaku.o を作成する。
+
+```bash
+objcopy -I binary -O elf64-x86-64 -B i386:x86-64 hankaku.bin hankaku.o
+```
