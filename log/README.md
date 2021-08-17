@@ -258,3 +258,39 @@ source /home/h-kiwata/osbook/devenv/buildenv.sh
 Console console{*pixel_writer, {0, 0, 0}, {255, 255, 255}};
 console = new(console)Console{*pixel_writer, {0, 0, 0}, {255, 255, 255}};
 ```
+
+- make コマンドを実行して以下のエラーが生じる時は、`source /home/h-kiwata/osbook/devenv/buildenv.sh` を実行するのを忘れている。
+
+```bash
+clang++  -O2 -Wall -g --target=x86_64-elf -ffreestanding -mno-red-zone -fno-exceptions -fno-rtti -std=c++17 -c main.cpp
+main.cpp:1:10: fatal error: 'cstdint' file not found
+#include <cstdint>
+         ^~~~~~~~~
+1 error generated.
+Makefile:22: recipe for target 'main.o' failed
+make: *** [main.o] Error 1
+```
+
+- ポインタと参照のプログラムの文法の違いに関して
+
+- `graphics.cpp` の中で `Write` 関数を呼び出す時
+
+```c
+void DrawRectangle(PixelWriter& writer, const Vector2D<int>& pos,
+                   const Vector2D<int>& size, const PixelColor& color) {
+    for (int dx = 0; dx < size.x; ++dx) {
+      writer.Write(pos.x + dx, pos.y, color);
+      writer.Write(pos.x + dx, pos.y + size.y - 1, color);
+    }
+    for (int dy = 0; dy < size.y; ++dy) {
+      writer.Write(pos.x, pos.y + dy, color);
+      writer.Write(pos.x + size.x - 1, pos.y + dy, color);
+    }
+}
+```
+
+- `main.cpp` の中で呼び出す時
+
+```c
+pixel_writer->Write(200 + dx, 100 + dy, {255, 255, 255});
+```
