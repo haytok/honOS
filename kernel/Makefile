@@ -41,3 +41,10 @@ depends:
 	$(MAKE) $(DEPENDS)
 
 -include $(DEPENDS)
+
+.PHONY: run
+run:
+	sudo echo run
+	$(HOME)/osbook/devenv/run_qemu.sh \
+	$(HOME)/edk2/Build/HonoLoaderX64/DEBUG_CLANG38/X64/Loader.efi \
+	$(HOME)/honOS/kernel/kernel.elf
