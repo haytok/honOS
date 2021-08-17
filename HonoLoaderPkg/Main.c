@@ -305,7 +305,7 @@ EFI_STATUS EFIAPI UefiMain (
   }
 
   CopyLoadSegments(kernel_ehdr);
-  Print(L"Kernel: 0x%0lx - 0x%0lx\n", kernel_first_addr, kernel_last_addr);
+  // Print(L"Kernel: 0x%0lx - 0x%0lx\n", kernel_first_addr, kernel_last_addr);
 
   status = gBS->FreePool(kernel_buffer);
   if (EFI_ERROR(status)) {
