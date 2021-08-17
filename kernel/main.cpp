@@ -16,6 +16,24 @@ void operator delete(void* obj) noexcept {}
 char pixel_writer_buf[sizeof(RGBResv8BitPerColorPixelWriter)];
 PixelWriter* pixel_writer;
 
+char console_buf[sizeof(Console)];
+Console* console;
+
+int printk(const char *format, ...) {
+  va_list ap;
+  int result;
+  char s[1024];
+
+  va_start(ap, format);
+  // Kernel 内で vsprintf, sprintf をするためのロジックは、day05d で実装
+  result = vsprintf(s, format, ap);
+  va_end(ap);
+
+  console->PutString(s);
+
+  return result;
+}
+
 extern "C" void KernelMain(const struct FrameBufferConfig& frame_buffer_config) {
   switch (frame_buffer_config.pixel_format) {
     case kPixelRGBResv8BitPerColor:
@@ -25,13 +43,10 @@ extern "C" void KernelMain(const struct FrameBufferConfig& frame_buffer_config) 
       pixel_writer = new(pixel_writer_buf)PixelBGRResv8BitPerColorPixelWriter{frame_buffer_config};
       break;
   }
+  console = new(console_buf)Console{*pixel_writer, {0, 0, 0}, {255, 255, 255}};
 
-  Console console{*pixel_writer, {0, 0, 0}, {255, 255, 255}};
   for (int i = 0; i < 27; ++i) {
-    char buf[128];
-    // Kernel 内で sprintf をするためのロジックは、day05d で実装
-    sprintf(buf, "line%d\n", i);
-    console.PutString(buf);
+    printk("printk %d\n", i);
   }
 
   while (1) __asm__("hlt");
