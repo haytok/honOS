@@ -32,3 +32,20 @@ class PixelBGRResv8BitPerColorPixelWriter : public PixelWriter {
    using PixelWriter::PixelWriter;
    virtual void Write(int x, int y, const PixelColor& c) override;
 };
+
+template <typename T>
+struct Vector2D {
+  T x, y;
+
+  template <typename U>
+  Vector2D<T>& operator +=(const Vector2D<U>& rhs) {
+    x += rhs.x;
+    y += rhs.y;
+    return *this;
+  }
+};
+
+void FillRectangle(PixelWriter& writer, const Vector2D<int>& pos,
+                   const Vector2D<int>& size, const PixelColor& color);
+void DrawRectangle(PixelWriter& writer, const Vector2D<int>& pos,
+                   const Vector2D<int>& size, const PixelColor& color);
