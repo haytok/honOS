@@ -252,3 +252,9 @@ objcopy -I binary -O elf64-x86-64 -B i386:x86-64 hankaku.bin hankaku.o
 source /home/h-kiwata/osbook/devenv/buildenv.sh
 ```
 
+- `Console クラス` を実装したので、`配置 new` でグローバル変数 `console` を宣言するように実装を変更した。
+
+```bash
+Console console{*pixel_writer, {0, 0, 0}, {255, 255, 255}};
+console = new(console)Console{*pixel_writer, {0, 0, 0}, {255, 255, 255}};
+```
