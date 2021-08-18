@@ -14,7 +14,7 @@ class Error {
   Error(Code code) : code_{code} {}
 
   operator bool() const {
-    return this->code_ == kSuccess;
+    return this->code_ != kSuccess;
   }
 
   const char* Name() const {
