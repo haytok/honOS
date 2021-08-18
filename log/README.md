@@ -294,3 +294,17 @@ void DrawRectangle(PixelWriter& writer, const Vector2D<int>& pos,
 ```c
 pixel_writer->Write(200 + dx, 100 + dy, {255, 255, 255});
 ```
+
+# day06
+
+- C 言語からアセンブリでリンクされて関数を呼び出すのに参考になる。
+  - [前節のプログラムを修正して 32 bit 用でコンパイルして実行してみた](https://github.com/dilmnqvovpnmlib/LowLevelProgramming/tree/main/log/20210508#%E5%89%8D%E7%AF%80%E3%81%AE%E3%83%97%E3%83%AD%E3%82%B0%E3%83%A9%E3%83%A0%E3%82%92%E4%BF%AE%E6%AD%A3%E3%81%97%E3%81%A6-32-bit-%E7%94%A8%E3%81%A7%E3%82%B3%E3%83%B3%E3%83%91%E3%82%A4%E3%83%AB%E3%81%97%E3%81%A6%E5%AE%9F%E8%A1%8C%E3%81%97%E3%81%A6%E3%81%BF%E3%81%9F)
+
+- C++ で `std::array` で作成した配列のサイズを計算する。
+  - [配列データを格納してサイズを計算するには std::array コンテナを使用する](https://www.delftstack.com/ja/howto/cpp/how-to-find-length-of-an-array-in-cpp/#%E9%85%8D%E5%88%97%E3%83%87%E3%83%BC%E3%82%BF%E3%82%92%E6%A0%BC%E7%B4%8D%E3%81%97%E3%81%A6%E3%82%B5%E3%82%A4%E3%82%BA%E3%82%92%E8%A8%88%E7%AE%97%E3%81%99%E3%82%8B%E3%81%AB%E3%81%AF-std-array-%E3%82%B3%E3%83%B3%E3%83%86%E3%83%8A%E3%82%92%E4%BD%BF%E7%94%A8%E3%81%99%E3%82%8B)
+- 変数におけるconstexprは、#define などで作っていたようなコンパイル時定数を作るためのキーワードである。
+  - [C++、constexprのまとめ](https://qiita.com/KRiver1/items/ef7731467b5ca83850cb#%E5%A4%89%E6%95%B0%E3%81%AEconstexpr)
+- メンバ関数の宣言に const キーワードを指定するとそのメンバ関数はオブジェクトの持つメンバ変数を変更できなくなります。
+  - [オブジェクトの変更拒否](http://wisdom.sakura.ne.jp/programming/cpp/cpp42.html)
+- [明示的な型変換演算子のオーバーロード](https://cpprefjp.github.io/lang/cpp11/explicit_conversion_operator.html)
+- [C++：列挙型enum](http://tomame0se.blog.shinobi.jp/c--/c--%EF%BC%9A%E5%88%97%E6%8C%99%E5%9E%8Benum)
