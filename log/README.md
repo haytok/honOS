@@ -308,3 +308,36 @@ pixel_writer->Write(200 + dx, 100 + dy, {255, 255, 255});
   - [オブジェクトの変更拒否](http://wisdom.sakura.ne.jp/programming/cpp/cpp42.html)
 - [明示的な型変換演算子のオーバーロード](https://cpprefjp.github.io/lang/cpp11/explicit_conversion_operator.html)
 - [C++：列挙型enum](http://tomame0se.blog.shinobi.jp/c--/c--%EF%BC%9A%E5%88%97%E6%8C%99%E5%9E%8Benum)
+
+- day06c のポーリングでマウス入力の節でリスト 6.18 のプログラムを実装して実行すると、思ったような挙動をしなかった。そこで、6.4 で紹介されている Log 関数を実装して、ScannAll 関数を起点に printk デバッグを行った。すると、`error.h` の以下の箇所が間違っていることに気づけた。
+
+- 修正前
+
+```c
+operator bool() const {
+  return this->code_ == kSuccess;
+}
+```
+
+- 修正後
+
+```c
+operator bool() const {
+  return this->code_ != kSuccess;
+}
+```
+
+- 本来通るはずのない箇所に処理が行っていたので、トラブルシューティングを成功させることができた。以下のプログラムの if 文の中を本来は通らないのだが、上述の間違いにより `kSuccess` の時に中を通ってしまっていた。
+
+```c
+Error ScanFunction(uint8_t bus, uint8_t device, uint8_t function) {
+  auto class_code = ReadClassCode(bus, device, function);
+  auto header_type = ReadHeaderType(bus, device, function);
+  Device dev{bus, device, function, header_type, class_code};
+  if (auto err = AddDevice(dev)) {
+    return err;
+  }
+...
+}
+```
+
