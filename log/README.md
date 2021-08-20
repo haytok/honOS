@@ -353,3 +353,5 @@ Error ScanFunction(uint8_t bus, uint8_t device, uint8_t function) {
   - 割り込みハンドラの処理が終わると、中断していた処理を再開する。
 
 - [Linuxでアセンブラ](https://zenn.dev/inc/scraps/7321a9fe6b1be6)
+
+- C++ で . と -> の使い分けが全くわからん。
