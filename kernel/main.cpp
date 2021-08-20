@@ -17,6 +17,8 @@
 #include "usb/classdriver/mouse.hpp"
 #include "usb/xhci/xhci.hpp"
 #include "usb/xhci/trb.hpp"
+#include "interrupt.hpp"
+#include "asmfunc.h"
 
 char pixel_writer_buf[sizeof(RGBResv8BitPerColorPixelWriter)];
 PixelWriter* pixel_writer;
@@ -68,6 +70,21 @@ void SwitchEhci2Xhci(const pci::Device& xhc_dev) {
   pci::WriteConfReg(xhc_dev, 0xd0, ehci2xhci_ports); // XUSB2PR
   Log(kDebug, "SwitchEhci2Xhci: SS = %02, xHCI = %02x\n",
       superspeed_ports, ehci2xhci_ports);
+}
+
+// 割り込みハンドラの実装
+usb::xhci::Controller* xhc;
+
+__attribute__((interrupt))
+void IntHandlerXHCI(InterruptFrame* frame) {
+  while (xhc->PrimaryEventRing()->HasFront()) {
+    if (auto err = ProcessEvent(*xhc)) {
+      Log(kError, "Error while ProcessEvent: %s at %s:%d\n",
+          err.Name(), err.File(), err.Line());
+    }
+  }
+  // ここでこの関数を呼び出す意味をあまり分かっていない。
+  NotifyEndOfInterrupt();
 }
 
 extern "C" void KernelMain(const struct FrameBufferConfig& frame_buffer_config) {
@@ -130,6 +147,21 @@ extern "C" void KernelMain(const struct FrameBufferConfig& frame_buffer_config) 
         xhc_dev->bus, xhc_dev->device, xhc_dev->function);
   }
 
+  const uint16_t cs = GetCS();
+  SetIDTEntry(idt[InterruptVector::kXHCI], MakeIDTAttr(DescriptorType::kInterruptGate, 0),
+              reinterpret_cast<uint64_t>(IntHandlerXHCI), cs);
+  LoadIDT(sizeof(idt) - 1, reinterpret_cast<uintptr_t>(&idt[0]));
+
+  // 0xfee00020 番地のビット 31:24 を読み取る。
+  // その結果、このプログラムが動作しているコアの Local APIC ID を取得できる。
+  const uint8_t bsp_local_apic_id =
+    *reinterpret_cast<const uint32_t*>(0xfee00020) >> 24;
+  pci::ConfigureMSIFixedDestination(
+    *xhc_dev, bsp_local_apic_id,
+    pci::MSITriggerMode::kLevel, pci::MSIDeliveryMode::kFixed,
+    InterruptVector::kXHCI, 0
+  );
+
   const WithError<uint64_t> xhc_bar = pci::ReadBar(*xhc_dev, 0);
   Log(kDebug, "ReadBar: %s\n", xhc_bar.error.Name());
   const uint64_t xhc_mmio_base = xhc_bar.value & ~static_cast<uint64_t>(0xf);
@@ -148,6 +180,9 @@ extern "C" void KernelMain(const struct FrameBufferConfig& frame_buffer_config) 
   Log(kInfo, "xHC starting\n");
   xhc.Run();
 
+  ::xhc = &xhc;
+  __asm__("sti");
+
   usb::HIDMouseDriver::default_observer = MouseObserver;
 
   for (int i = 1; i <= xhc.MaxPorts(); ++i) {
@@ -160,13 +195,6 @@ extern "C" void KernelMain(const struct FrameBufferConfig& frame_buffer_config) 
             err.Name(), err.File(), err.Line());
         continue;
       }
-    }
-  }
-
-  while (1) {
-    if (auto err = ProcessEvent(xhc)) {
-        Log(kError, "Error while ProcessEvent: %s at %s:%d\n",
-            err.Name(), err.File(), err.Line());
     }
   }
 

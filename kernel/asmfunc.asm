@@ -19,3 +19,23 @@ IoIn32:
     mov dx, di
     in eax, dx
     ret
+
+; uint16_t GetCS()
+global GetCS
+GetCS:
+    xor eax, eax
+    mov ax, cs
+    ret
+
+; void LoadIDT(uint16_t limit, uint64_t offset)
+global LoadIDT
+LoadIDT:
+    push rbp
+    mov rbp, rsp
+    sub rsp, 10; limit と offset の領域分の 10 Byte のメモリ領域を確保
+    mov [rsp], di
+    mov [rsp + 2], rsi
+    lidt [rsp]; CPU に IDT を登録する
+    mov rsp, rbp
+    pop rbp
+    ret
