@@ -355,3 +355,11 @@ Error ScanFunction(uint8_t bus, uint8_t device, uint8_t function) {
 - [Linuxでアセンブラ](https://zenn.dev/inc/scraps/7321a9fe6b1be6)
 
 - C++ で . と -> の使い分けが全くわからん。
+
+# day08
+
+- UEFI 側に `memory_map.hpp` のシンボリックリンクを貼る。
+
+```bash
+ln -s ../kernel/memory_map.hpp .
+```
