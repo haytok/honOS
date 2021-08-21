@@ -20,6 +20,7 @@
 #include "interrupt.hpp"
 #include "asmfunc.h"
 #include "queue.hpp"
+#include "memory_map.hpp"
 
 char pixel_writer_buf[sizeof(RGBResv8BitPerColorPixelWriter)];
 PixelWriter* pixel_writer;
@@ -91,7 +92,8 @@ void IntHandlerXHCI(InterruptFrame* frame) {
   NotifyEndOfInterrupt();
 }
 
-extern "C" void KernelMain(const struct FrameBufferConfig& frame_buffer_config) {
+extern "C" void KernelMain(const FrameBufferConfig& frame_buffer_config,
+                           const MemoryMap& memory_map) {
   switch (frame_buffer_config.pixel_format) {
     case kPixelRGBResv8BitPerColor:
       pixel_writer = new(pixel_writer_buf)RGBResv8BitPerColorPixelWriter{frame_buffer_config};
@@ -116,6 +118,30 @@ extern "C" void KernelMain(const struct FrameBufferConfig& frame_buffer_config) 
   console = new(console_buf)Console{*pixel_writer, kDesktopFGColor, kDesktopBGColor};
 
   printk("Welcome to HonOS!!!\n");
+
+  // ブートローダから受け取ったメモリマップの情報を表示する
+  const std::array available_memory_types {
+    MemoryType::kEfiBootServicesCode,
+    MemoryType::kEfiBootServicesData,
+    MemoryType::kEfiConventionalMemory,
+  };
+
+  printk("memory_map: %p\n", &memory_map);
+  for (uintptr_t iter = reinterpret_cast<uintptr_t>(memory_map.buffer);
+       iter < reinterpret_cast<uintptr_t>(memory_map.buffer) + memory_map.map_size;
+       iter += memory_map.descriptor_size) {
+    auto desc = reinterpret_cast<MemoryDescriptor*>(iter);
+    for (int i = 0; i < available_memory_types.size(); ++i) {
+      if (desc->type == available_memory_types[i]) {
+        printk("type = %u, phys = %08lx - %08lx, pages = %lu, attr = %08lx\n",
+            desc->type,
+            desc->physical_start,
+            desc->physical_start + desc->number_of_pages * 4096 - 1,
+            desc->number_of_pages,
+            desc->attribute);
+      }
+    }
+  }
 
   mouse_cursor = new(mouse_cursor_buf) MouseCursor{
     pixel_writer, kDesktopBGColor, {300, 200}
