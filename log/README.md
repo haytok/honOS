@@ -366,3 +366,32 @@ ln -s ../kernel/memory_map.hpp .
 
 - UEFI から渡されたメモリマップを参照して空いているメモリ領域を探し出し、メモリ割り当て要求に応じて必要なメモリを領域を払い出すのが目的である。
 - [第5回 APICと割り込み/第6回 メモリ管理](https://www.youtube.com/watch?v=sZbUQouuYho&t=6303s)
+
+- tag 名で branch を移動する。
+  - [gitでタグをチェックアウトする](https://h2ham.net/git-tag-checkout/)
+
+```bash
+git checkout refs/tags/<tag 名>
+```
+
+- `::func()` に関する解説が書かれている。いわゆる名前空間のアクセス方法に関して解説されている。
+  - [名前空間 | Programming Place Plus　Modern C++編【言語解説】　第４章](https://programming-place.net/ppp/contents/modern_cpp/language/004.html)
+
+- `explicit` は、コンパイラが暗黙の型変換をしないための修飾子である。
+
+- `constexpr` は、コンパイル時に値が決定する  定数などを定義できる。C 言語で言うところのマクロとかかな？
+  - [constexpr](https://cpprefjp.github.io/lang/cpp11/constexpr.html)
+
+- `reinterpret_cast` は、あるポインタ型の変数を他のポインタ型の変数に強制的に変換するための関数である。
+  - [reinterpret_cast](https://www.yunabe.jp/docs/cpp_casts.html#reinterpret_cast)
+
+- `alignas` は、コンパイラがキリの良い値でアライメントするように命令するための修飾子である。
+  - [alignas](https://cpprefjp.github.io/lang/cpp11/alignas.html)
+
+- `git add -N <ファイル名>` をすると、ファイルの差分を確認することができる。
+  - [新規にファイルを作成した後で git add -N (–intent-to-add) した際の git diff の挙動](https://reboooot.net/post/how-to-check-changes-with-git/)
+
+- C や C++ での `__FILE__` や `__LINE__` は、ファイル名や行数のデバッグ情報が含まれる。
+  - [C言語入門：__FILE__](https://www.geekpage.jp/programming/c/__file__.php)
+
+- [【C++】無名名前空間とは【目的と用途、活用例】](https://marycore.jp/prog/cpp/unnamed-namespace/#%E7%84%A1%E5%90%8D%E5%90%8D%E5%89%8D%E7%A9%BA%E9%96%93%E3%81%AE%E7%89%B9%E5%BE%B4%E3%81%A8%E7%9B%AE%E7%9A%84)
