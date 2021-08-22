@@ -363,3 +363,6 @@ Error ScanFunction(uint8_t bus, uint8_t device, uint8_t function) {
 ```bash
 ln -s ../kernel/memory_map.hpp .
 ```
+
+- UEFI から渡されたメモリマップを参照して空いているメモリ領域を探し出し、メモリ割り当て要求に応じて必要なメモリを領域を払い出すのが目的である。
+- [第5回 APICと割り込み/第6回 メモリ管理](https://www.youtube.com/watch?v=sZbUQouuYho&t=6303s)
