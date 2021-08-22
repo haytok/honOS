@@ -39,3 +39,60 @@ LoadIDT:
     mov rsp, rbp
     pop rbp
     ret
+
+; void LoadGDT(sizeof(gdt) - 1, reinterpret_cast<uintptr_t>(&gdt[0]))
+; void LoadGDT(uint16_t limit, uint64_t offset)
+global LoadGDT
+LoadGDT;
+    push rbp
+    mov rbp, rsp
+    sub rsp, 10
+    mov [rsp], di
+    mov [rsp + 2], rsi
+    lgdt [rsp] ; LGDT レジスタに設定する
+    mov rsp, rbp
+    pop rbp
+    ret
+
+; void SetCSSS(uint16_t cs, uint16_t ss)
+global SetCSSS
+SetCSSS:
+    push rbp
+    mov rbp, rsp
+    mov ss, si
+    mov rax, .next
+    push rdi
+    push rax
+    o64 retf
+.next:
+    mov rsp, rbp
+    pop rbp
+    ret
+
+; void SetDSAll(uint16_t value)
+global SetDSAll
+SetDSAll:
+    mov ds, di
+    mov es, di
+    mov fs, di
+    mov gs, di
+    ret
+
+; void SetCR3(uint64_t value)
+; CR3 を書き換えると、CPU は新しい階層ページング構造を使ってアドレス変換を行う
+global SetCR3
+SetCR3:
+    mov cr3, rdi
+    ret
+
+extern kernel_main_stack
+extern KernelMainNewStack
+
+; UEFI から受け渡すデータ構造を移行するために、エントリポイント名を変更する
+global KernelMain
+KernelMain:
+    mov rsp, kernel_main_stack + 1024 * 1024
+    call KernelMainNewStack
+.fin:
+    hlt
+    jmp .fin
