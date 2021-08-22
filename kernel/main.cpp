@@ -23,6 +23,7 @@
 #include "memory_map.hpp"
 #include "segment.hpp"
 #include "paging.hpp"
+#include "memory_manager.hpp"
 
 char pixel_writer_buf[sizeof(RGBResv8BitPerColorPixelWriter)];
 PixelWriter* pixel_writer;
@@ -47,6 +48,9 @@ int printk(const char *format, ...) {
 
   return result;
 }
+
+char memory_manager_buf[sizeof(BitmapMemoryManager)];
+BitmapMemoryManager* memory_manager;
 
 char mouse_cursor_buf[sizeof(MouseCursor)];
 MouseCursor* mouse_cursor;
@@ -139,6 +143,37 @@ extern "C" void KernelMainNewStack(
   // ページングのセットアップ
   SetupIdentityPageTable();
 
+  // メモリマネージャの作成
+  ::memory_manager = new(memory_manager_buf) BitmapMemoryManager;
+
+  const auto memory_map_base = reinterpret_cast<uintptr_t>(memory_map.buffer);
+  uintptr_t available_end = 0;
+  // UEFI から受け取ったメモリマップが使用中か未使用かを判定する。
+  // 初期時点では、メモリマネージャはメモリ領域全体が未使用だと思っているので、使用領域を伝えるロジックを作成する。
+  for (uintptr_t iter = memory_map_base;
+       iter < memory_map_base + memory_map.map_size;
+       iter += memory_map.descriptor_size) {
+    auto desc = reinterpret_cast<const MemoryDescriptor*>(iter);
+    if (available_end < desc->physical_start) {
+      memory_manager->MarkAllocated(
+        FrameID{available_end / kBytesPerFrame},
+        (desc->physical_start - available_end) / kBytesPerFrame);
+    }
+
+    const auto physical_end =
+      desc->physical_start + desc->number_of_pages * kUEFIPageSize;
+    if (IsAvailable(static_cast<MemoryType>(desc->type))) {
+      // 未使用の領域
+      available_end = physical_end;
+    } else {
+      // メモリマネージャに伝える
+      memory_manager->MarkAllocated(
+        FrameID{desc->physical_start / kBytesPerFrame},
+        desc->number_of_pages * kUEFIPageSize / kBytesPerFrame);
+    }
+  }
+  memory_manager->SetMemoryRange(FrameID{1}, FrameID{available_end / kBytesPerFrame});
+
   printk("memory_map: %p\n", &memory_map);
   for (uintptr_t iter = reinterpret_cast<uintptr_t>(memory_map.buffer);
        iter < reinterpret_cast<uintptr_t>(memory_map.buffer) + memory_map.map_size;
@@ -165,6 +200,8 @@ extern "C" void KernelMainNewStack(
   // PCI デバイスを列挙する
   auto err = pci::ScanAllBus();
   printk("ScanAllBus: %s\n", err.Name());
+  Log(kWarn, "unsigned long %ld, int %d, char %d, size_t %d\n",
+    sizeof(unsigned long), sizeof(int), sizeof(char), sizeof(size_t));
 
   for (int i = 0; i < pci::num_device; ++i) {
     const auto& dev = pci::devices[i];
@@ -265,6 +302,7 @@ extern "C" void KernelMainNewStack(
         Log(kError, "Unknown message type: %d\n", msg.type);
     }
   }
+
 }
 
 extern "C" void __cxa_pure_virtual(){

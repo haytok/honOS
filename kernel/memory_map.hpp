@@ -46,7 +46,6 @@ inline bool operator==(uint32_t lhs, MemoryType rhs) {
 inline bool operator==(MemoryType lhs, uint32_t rhs) {
   return rhs == lhs;
 }
-#endif
 
 // メモリが空き領域で OS から自由に使用できるかを判定する
 inline bool IsAvailable(MemoryType memory_type) {
@@ -57,3 +56,4 @@ inline bool IsAvailable(MemoryType memory_type) {
 }
 
 const int kUEFIPageSize = 4096;
+#endif
