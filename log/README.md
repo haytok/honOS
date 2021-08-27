@@ -414,3 +414,6 @@ git checkout refs/tags/<tag 名>
 
 - std::vector::end() は、末尾の次を指すイテレータを取得する。例えば文字列なら Null が返る？
   - [std::vector::end](https://cpprefjp.github.io/reference/vector/vector/end.html)
+
+- global 変数で定義している `mouse_layer_id` に `auto` を付けて代入すると、マウスが動かずバグった。
+- 現時点での実装だと、かなりマウスがチラつく。また、マウスを上下に移動させると、移動させた分だけ戻さないと再度マウスが表示されない。そして、左右にマウスを移動させると、反対側からマウスが現れるバグがある。
