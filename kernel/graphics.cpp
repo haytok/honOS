@@ -7,7 +7,7 @@ void RGBResv8BitPerColorPixelWriter::Write(int x, int y, const PixelColor& c) {
   p[2] = c.b;
 }
 
-void PixelBGRResv8BitPerColorPixelWriter::Write(int x, int y, const PixelColor& c) {
+void BGRResv8BitPerColorPixelWriter::Write(int x, int y, const PixelColor& c) {
   auto p = PixelAt(x, y);
   p[0] = c.b;
   p[1] = c.g;
@@ -33,4 +33,26 @@ void DrawRectangle(PixelWriter& writer, const Vector2D<int>& pos,
       writer.Write(pos.x, pos.y + dy, color);
       writer.Write(pos.x + size.x - 1, pos.y + dy, color);
     }
+}
+
+void DrawDesktop(PixelWriter& writer) {
+  const auto width = writer.Width();
+  const auto height = writer.Height();
+  // 背景色を書き込む
+  FillRectangle(writer,
+                {0, 0},
+                {width, height - 50},
+                kDesktopBGColor);
+  FillRectangle(writer,
+                {0, height - 50},
+                {width, 50},
+                {1, 8, 17});
+  FillRectangle(writer,
+                {0, height - 50},
+                {width / 5, 50},
+                {80, 80, 80});
+  DrawRectangle(writer,
+                {10, height - 40},
+                {30, 30},
+                {160, 160, 160});
 }

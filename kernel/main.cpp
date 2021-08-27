@@ -24,15 +24,14 @@
 #include "segment.hpp"
 #include "paging.hpp"
 #include "memory_manager.hpp"
+#include "window.hpp"
+#include "layer.hpp"
 
 char pixel_writer_buf[sizeof(RGBResv8BitPerColorPixelWriter)];
 PixelWriter* pixel_writer;
 
 char console_buf[sizeof(Console)];
 Console* console;
-
-const PixelColor kDesktopBGColor{45, 118, 237};
-const PixelColor kDesktopFGColor{255, 255, 255};
 
 int printk(const char *format, ...) {
   va_list ap;
@@ -52,11 +51,11 @@ int printk(const char *format, ...) {
 char memory_manager_buf[sizeof(BitmapMemoryManager)];
 BitmapMemoryManager* memory_manager;
 
-char mouse_cursor_buf[sizeof(MouseCursor)];
-MouseCursor* mouse_cursor;
+unsigned int mouse_layer_id;
 
 void MouseObserver(int8_t displacement_x, int8_t displacement_y) {
-  mouse_cursor->MoveRelative({displacement_x, displacement_y});
+  layer_manager->MoveRelative(mouse_layer_id, {displacement_x, displacement_y});
+  layer_manager->Draw();
 }
 
 void SwitchEhci2Xhci(const pci::Device& xhc_dev) {
@@ -112,25 +111,16 @@ extern "C" void KernelMainNewStack(
       pixel_writer = new(pixel_writer_buf)RGBResv8BitPerColorPixelWriter{frame_buffer_config};
       break;
     case kPixelBGRResv8BitPerColor:
-      pixel_writer = new(pixel_writer_buf)PixelBGRResv8BitPerColorPixelWriter{frame_buffer_config};
+      pixel_writer = new(pixel_writer_buf)BGRResv8BitPerColorPixelWriter{frame_buffer_config};
       break;
   }
 
-  const int kFrameWidth = frame_buffer_config.horizontal_resolution;
-  const int kFrameHeight = frame_buffer_config.vertical_resolution;
+  DrawDesktop(*pixel_writer);
 
-  FillRectangle(*pixel_writer, {0, 0}, 
-                {kFrameWidth, kFrameHeight - 50}, kDesktopBGColor);
-  FillRectangle(*pixel_writer, {0, kFrameHeight - 50}, 
-                {kFrameWidth, 50}, {1, 8, 17});
-  FillRectangle(*pixel_writer, {0, kFrameHeight - 50}, 
-                {kFrameWidth / 5, 50}, {80, 80, 80});
-  DrawRectangle(*pixel_writer, {10, kFrameHeight - 40}, 
-                {30, 30}, {160, 160, 160});
-
-  console = new(console_buf)Console{*pixel_writer, kDesktopFGColor, kDesktopBGColor};
-
+  console = new(console_buf)Console{kDesktopFGColor, kDesktopBGColor};
+  console->SetWriter(pixel_writer);
   printk("Welcome to HonOS!!!\n");
+  SetLogLevel(kWarn);
 
   // UEFI から OS にメモリの情報を持っていき、メモリのセグメンテーションの設定
   SetupSegments();
@@ -174,6 +164,13 @@ extern "C" void KernelMainNewStack(
   }
   memory_manager->SetMemoryRange(FrameID{1}, FrameID{available_end / kBytesPerFrame});
 
+  // ヒープ領域の確保
+  if (auto err = InitializeHeap(*memory_manager)) {
+    Log(kError, "failed to allocate pages: %s at %s:%d\n",
+        err.Name(), err.File(), err.Line());
+    exit(1);
+  }
+
   printk("memory_map: %p\n", &memory_map);
   for (uintptr_t iter = reinterpret_cast<uintptr_t>(memory_map.buffer);
        iter < reinterpret_cast<uintptr_t>(memory_map.buffer) + memory_map.map_size;
@@ -188,10 +185,6 @@ extern "C" void KernelMainNewStack(
           desc->attribute);
     }
   }
-
-  mouse_cursor = new(mouse_cursor_buf) MouseCursor{
-    pixel_writer, kDesktopBGColor, {300, 200}
-  };
 
   std::array<Message, 32> main_queue_data;
   ArrayQueue<Message> main_queue{main_queue_data};
@@ -277,6 +270,40 @@ extern "C" void KernelMainNewStack(
       }
     }
   }
+
+  // レイヤの初期化処理
+  const int kFrameWidth = frame_buffer_config.horizontal_resolution;
+  const int kFrameHeight = frame_buffer_config.vertical_resolution;
+
+  // 背景の window を初期化
+  auto bgwindow = std::make_shared<Window>(kFrameWidth, kFrameHeight);
+  auto bgwriter = bgwindow->Writer();
+
+  DrawDesktop(*bgwriter);
+  console->SetWriter(bgwriter);
+
+  auto mouse_window = std::make_shared<Window>(
+    kMouseCursorWidth, kMouseCursorHeight);
+  mouse_window->SetTransparentColor(kMouseTransparentColor);
+  DrawMouseCursor(mouse_window->Writer(), {0, 0});
+
+  // layer manager の初期化
+  layer_manager = new LayerManager;
+  layer_manager->SetWriter(pixel_writer);
+
+  auto bglayer_id = layer_manager->NewLayer()
+    .SetWindow(bgwindow)
+    .Move({0, 0})
+    .ID();
+  // {300, 200} でマウスの初期位置を決めてる
+  mouse_layer_id = layer_manager->NewLayer()
+    .SetWindow(mouse_window)
+    .Move({200, 200})
+    .ID();
+
+  layer_manager->UpDown(bglayer_id, 0);
+  layer_manager->UpDown(mouse_layer_id, 1);
+  layer_manager->Draw();
 
   while (true) {
     __asm__("cli");

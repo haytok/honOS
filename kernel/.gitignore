@@ -1,5 +1,8 @@
-kernel.elf
+/kernel.elf
 *.o
 .*.d
-hankaku.bin
+/hankaku.bin
 *.swp
+
+/html
+/ipxe_root
