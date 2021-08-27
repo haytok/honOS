@@ -395,3 +395,22 @@ git checkout refs/tags/<tag 名>
   - [C言語入門：__FILE__](https://www.geekpage.jp/programming/c/__file__.php)
 
 - [【C++】無名名前空間とは【目的と用途、活用例】](https://marycore.jp/prog/cpp/unnamed-namespace/#%E7%84%A1%E5%90%8D%E5%90%8D%E5%89%8D%E7%A9%BA%E9%96%93%E3%81%AE%E7%89%B9%E5%BE%B4%E3%81%A8%E7%9B%AE%E7%9A%84)
+
+# day09
+
+- [Newlibc の sbrk のドキュメント](https://sourceware.org/newlib/libc.html#index-sbrk)
+
+- optional 型の値は value() で取り出すことができる。
+  - [std::optional](https://cpprefjp.github.io/reference/optional/optional.html)
+
+- std::vector::emplace_back は、vector の末尾に要素を追加する。C++ 17 以降での返り値は構築した要素への参照が返る。
+  - [std::vector::emplace_back](https://cpprefjp.github.io/reference/vector/vector/emplace_back.html)
+
+- std::find_if の返り値は、対象となるイテレータが存在しない時は [first, last] の last のイテレータを返す。
+  - [std::find_if](https://cpprefjp.github.io/reference/algorithm/find_if.html)
+
+- std::find  の返り値は、対象となるイテレータが存在しない時は [first, last] の last のイテレータを返す。
+  - [std::find](https://cpprefjp.github.io/reference/algorithm/find.html)
+
+- std::vector::end() は、末尾の次を指すイテレータを取得する。例えば文字列なら Null が返る？
+  - [std::vector::end](https://cpprefjp.github.io/reference/vector/vector/end.html)
