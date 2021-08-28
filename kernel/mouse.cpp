@@ -41,7 +41,7 @@ void DrawMouseCursor(PixelWriter* pixel_writer, Vector2D<int> position) {
         // 白色
         pixel_writer->Write(position.x + dx, position.y + dy, {255, 255, 255});
       } else {
-        pixel_writer->Write(position.x + dx, position.y + dy, kMouseTransparentColor);
+        pixel_writer->Write(position.x + dx, position.y + dy, kMouseTransparentColor); // Window::DrawTo 関数で c != tc の条件文で書き込むか書き込まないかを決める。
       }
     }
   }

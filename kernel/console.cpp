@@ -31,7 +31,7 @@ void Console::SetWriter(PixelWriter* writer) {
     return;
   }
   writer_ = writer;
-  Refresh();
+  Refresh(); // この行をコメントアウトすると、背景になにも printk されなくなる。
 }
 
 void Console::Newline() {
