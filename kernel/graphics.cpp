@@ -1,14 +1,14 @@
 #include "graphics.hpp"
 
-void RGBResv8BitPerColorPixelWriter::Write(int x, int y, const PixelColor& c) {
-  auto p = PixelAt(x, y);
+void RGBResv8BitPerColorPixelWriter::Write(Vector2D<int> pos, const PixelColor& c) {
+  auto p = PixelAt(pos);
   p[0] = c.r;
   p[1] = c.g;
   p[2] = c.b;
 }
 
-void BGRResv8BitPerColorPixelWriter::Write(int x, int y, const PixelColor& c) {
-  auto p = PixelAt(x, y);
+void BGRResv8BitPerColorPixelWriter::Write(Vector2D<int> pos, const PixelColor& c) {
+  auto p = PixelAt(pos);
   p[0] = c.b;
   p[1] = c.g;
   p[2] = c.r;
@@ -18,7 +18,7 @@ void FillRectangle(PixelWriter& writer, const Vector2D<int>& pos,
                    const Vector2D<int>& size, const PixelColor& color) {
   for (int dy = 0; dy < size.y; ++dy) {
     for (int dx = 0; dx < size.x; ++dx) {
-      writer.Write(pos.x + dx, pos.y + dy, color);
+      writer.Write(pos + Vector2D<int> {dx, dy}, color);
     }
   }
 }
@@ -26,12 +26,12 @@ void FillRectangle(PixelWriter& writer, const Vector2D<int>& pos,
 void DrawRectangle(PixelWriter& writer, const Vector2D<int>& pos,
                    const Vector2D<int>& size, const PixelColor& color) {
     for (int dx = 0; dx < size.x; ++dx) {
-      writer.Write(pos.x + dx, pos.y, color);
-      writer.Write(pos.x + dx, pos.y + size.y - 1, color);
+      writer.Write(pos + Vector2D<int> {dx, 0}, color);
+      writer.Write(pos + Vector2D<int> {dx, size.y - 1}, color);
     }
     for (int dy = 1; dy < size.y - 1; ++dy) {
-      writer.Write(pos.x, pos.y + dy, color);
-      writer.Write(pos.x + size.x - 1, pos.y + dy, color);
+      writer.Write(pos + Vector2D<int> {0, dy}, color);
+      writer.Write(pos + Vector2D<int> {size.x - 1, dy}, color);
     }
 }
 
