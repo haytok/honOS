@@ -70,8 +70,8 @@ Error FrameBuffer::Copy(Vector2D<int> dst_pos, const FrameBuffer& src) {
   const auto dst_size = FrameBufferSize(config_);
   const auto src_size = FrameBufferSize(src.config_);
 
-  const Vector2D<int> dst_start = ElementMin(dst_pos, {0, 0});
-  const Vector2D<int> dst_end = ElementMax(dst_pos + src_size, dst_size);
+  const Vector2D<int> dst_start = ElementMax(dst_pos, {0, 0});
+  const Vector2D<int> dst_end = ElementMin(dst_pos + src_size, dst_size);
 
   // confing_ が起点になる。
   uint8_t* dst_buf = FrameAddrAt(dst_start, config_);
