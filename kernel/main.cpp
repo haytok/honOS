@@ -297,11 +297,10 @@ extern "C" void KernelMainNewStack(
   DrawMouseCursor(mouse_window->Writer(), {0, 0});
   mouse_position = {200, 200};
 
+  // メイン関数のループ回数を出力するウィンドウの初期化
   auto main_window = std::make_shared<Window>(
-    160, 68, frame_buffer_config.pixel_format);
+    160, 52, frame_buffer_config.pixel_format);
   DrawWindow(*main_window->Writer(), "Hello Window");
-  WriteString(*main_window->Writer(), {24, 28}, "Welcome to", {0, 0, 0});
-  WriteString(*main_window->Writer(), {24, 44}, " HonOS World!", {0, 0, 0});
 
   FrameBuffer screen;
   if (auto err = screen.Initialize(frame_buffer_config)) {
@@ -332,10 +331,21 @@ extern "C" void KernelMainNewStack(
   layer_manager->UpDown(main_window_layer_id, 2);
   layer_manager->Draw();
 
+  char str[128];
+  unsigned int count = 0;
+
   while (true) {
+    ++count;
+    sprintf(str, "%010u", count);
+    // 背景色で文字列を塗りつぶしてから文字列を書き込む
+    FillRectangle(*main_window->Writer(), {24, 28}, {8 * 10, 16}, {0xc6, 0xc6, 0xc6});
+    WriteString(*main_window->Writer(), {24, 28}, str, {0, 0, 0});
+    layer_manager->Draw();
+
     __asm__("cli");
     if (main_queue.Count() == 0) {
-      __asm__("sti\n\thlt");
+      // __asm__("sti\n\thlt");
+      __asm__("sti");
       continue;
     }
 
