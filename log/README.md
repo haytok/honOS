@@ -420,3 +420,13 @@ git checkout refs/tags/<tag 名>
 
 - `std::vector::data` は、配列の先頭へのポインタを返す。
   - [std::vector::data](https://cpprefjp.github.io/reference/vector/vector/data.html)
+
+# day10
+
+- 描画範囲を限定して再描画を行うようにして、チラツキを解消する。
+  - `LayerManager::Draw` に描画領域を指定するロジックを追加する。
+
+## day10d
+
+- 背景を描いてからウィンドウを描いているので、ウィンドウが表示されていない時間帯が存在する。
+- そこで、描画範囲を制限し、ウィンドウだけを再描画するようにリファクタリングすれば、ウィンドウが常に画面に描画され、チラツキが解消される。
