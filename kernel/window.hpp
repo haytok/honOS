@@ -28,7 +28,7 @@ class Window {
   Window& operator=(const Window& rhs) = delete;
 
   // 与えられた PixelWriter にウィンドウの表示領域を描画する
-  void DrawTo(FrameBuffer& dst, Vector2D<int> position);
+  void DrawTo(FrameBuffer& dst, Vector2D<int> pos, const Rectangle<int>& area);
   void SetTransparentColor(std::optional<PixelColor> c);
   WindowWriter* Writer();
 
@@ -38,6 +38,7 @@ class Window {
 
   int Width() const;
   int Height() const;
+  Vector2D<int> Size() const;
 
   void Move(Vector2D<int> dst_pos, const Rectangle<int>& src);
 
