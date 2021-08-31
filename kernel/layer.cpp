@@ -39,6 +39,11 @@ void Layer::DrawTo(FrameBuffer& screen, const Rectangle<int>& area) const {
 
 void LayerManager::SetWriter(FrameBuffer* screen) {
   screen_ = screen;
+
+  // バックバッファ (ダブルバッファリング) 用の変数を初期化する
+  FrameBufferConfig back_config = screen->Config();
+  back_config.frame_buffer = nullptr;
+  back_buffer_.Initialize(back_config);
 }
 
 Layer& LayerManager::NewLayer() {
@@ -48,8 +53,10 @@ Layer& LayerManager::NewLayer() {
 
 void LayerManager::Draw(const Rectangle<int>& area) const {
   for (auto layer : layer_stack_) {
-    layer->DrawTo(*screen_, area);
+    layer->DrawTo(back_buffer_, area);
   }
+  // layer->DrawTo(*screen_, area);
+  screen_->Copy(area.pos, back_buffer_, area);
 }
 
 // layer id が指定される時は、Window::DrawTo の window_area と pos が一致するので、window 全体を再描画する。
@@ -63,9 +70,10 @@ void LayerManager::Draw(unsigned int id) const {
       draw = true;
     }
     if (draw) {
-      layer->DrawTo(*screen_, window_area);
+      layer->DrawTo(back_buffer_, window_area);
     }
   }
+  screen_->Copy(window_area.pos, back_buffer_, window_area);
 }
 
 void LayerManager::Move(unsigned int id, Vector2D<int> new_pos) {

@@ -9,11 +9,12 @@
 
 class FrameBuffer {
  public:
-  Error Initialize(const FrameBufferConfig& config);
+  Error Initialize(const FrameBufferConfig& config); // config を受け取ると、writer などの他の変数も初期化してくれるメソッド。
   Error Copy(Vector2D<int> dst_pos, const FrameBuffer& src, const Rectangle<int>& src_area);
   void Move(Vector2D<int> dst_pos, const Rectangle<int>& src);
 
   FrameBufferWriter& Writer() { return *writer_; }
+  const FrameBufferConfig& Config() const { return config_; }
 
  private:
   FrameBufferConfig config_{};
