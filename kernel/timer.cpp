@@ -11,9 +11,11 @@ namespace {
 }
 
 void InitializeLAPICTimer() {
+  timer_manager = new TimerManager;
+
   divide_config = 0b1011;
   lvt_timer = (0b010 << 16) | InterruptVector::kLAPICTimer; // タイマを周期モードにして割り込みを許可する設定をレジスタに書き込む
-  initial_count = kCountMax;
+  initial_count = 0x1000000u;
 }
 
 void StartLAPICTimer() {
@@ -26,4 +28,14 @@ uint32_t LAPICTimerElapsed() {
 
 void StopLAPICTimer() {
   initial_count = 0;
+}
+
+void TimerManager::Tick() {
+  ++tick_;
+}
+
+TimerManager* timer_manager;
+
+void LAPICTimerOnInterrupt() {
+  timer_manager->Tick();
 }

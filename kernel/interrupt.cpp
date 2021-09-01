@@ -2,6 +2,7 @@
 
 #include "asmfunc.h"
 #include "segment.hpp"
+#include "timer.hpp"
 
 // 割り込み記述テーブルを宣言
 std::array<InterruptDescriptor, 256> idt;
@@ -34,7 +35,8 @@ namespace {
 
   __attribute__((interrupt))
   void IntHandlerLAPICTimer(InterruptFrame* frame) {
-    msg_queue->push_back(Message{Message::kInterruptLAPICTimer});
+    // msg_queue->push_back(Message{Message::kInterruptLAPICTimer});
+    LAPICTimerOnInterrupt();
     NotifyEndOfInterrupt();
   }
 }
