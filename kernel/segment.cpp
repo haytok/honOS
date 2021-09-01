@@ -46,3 +46,11 @@ void SetupSegments() {
   SetDataSegment(gdt[2], DescriptorType::kReadWrite, 0, 0, 0xfffff);
   LoadGDT(sizeof(gdt) - 1, reinterpret_cast<uintptr_t>(&gdt[0]));
 }
+
+void InitializeSegmentation() {
+  // UEFI から OS にメモリの情報を持っていき、メモリのセグメンテーションの設定
+  SetupSegments();
+
+  SetDSAll(kKernelDS);
+  SetCSSS(kKernelCS, kKernelSS);
+}
