@@ -430,3 +430,31 @@ git checkout refs/tags/<tag 名>
 
 - 背景を描いてからウィンドウを描いているので、ウィンドウが表示されていない時間帯が存在する。
 - そこで、描画範囲を制限し、ウィンドウだけを再描画するようにリファクタリングすれば、ウィンドウが常に画面に描画され、チラツキが解消される。
+
+## day10e
+
+- マウスをカウンタの上に重ねると、チラつくのは、カウンタを描画した後にマウスを描いているので、マウスが表示されていない期間が存在するからである。そこで、このチラツキを解消するためにダブルバッファリングという仕組みを活用する。
+  - [【OpenGLでゲームを作る】ダブルバッファリングとは](https://nn-hokuson.hatenablog.com/entry/2014/01/15/164232)
+
+# day11
+
+## osbook_day11a
+
+- リファクタする全体像を把握し、一通り diff のコードに目を通す。
+- main 関数と切り出す処理を順次リファクタしていく。
+
+1. graphics.hpp and graphics.cpp
+2. console.hpp and console.cpp
+3. segment.hpp and segment.cpp
+4. paging.hpp and paging.cpp
+5. memory_manager.hpp and memory_manager.cpp
+6. message.hpp
+7. interrupt.hpp and interrupt.cpp
+8. xhci.hpp and xhci.cpp の更新と main 関数から削除
+9. pci.hpp and pci.cpp
+10. layer.hpp and layer.cpp
+11. window.hpp and window.cpp
+12. mosue.hpp and mosue.cpp
+
+
+- 本日のドライバを変更しても修正が反映されない問題が生じた。これは Makefile を `osbook_day11a` の tag のブランチのものに書き換えると変更が反映された。おそらく、ドライバを修正してからビルドが反映されていなかった？
