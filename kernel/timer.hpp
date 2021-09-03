@@ -39,5 +39,7 @@ class TimerManager {
 };
 
 extern TimerManager* timer_manager;
+extern unsigned long lapic_timer_freq; // 1 秒あたりの Local ACPI タイマのカウント数を計測する。
+const int kTimerFreq = 100;
 
 void LAPICTimerOnInterrupt();

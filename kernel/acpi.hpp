@@ -52,6 +52,9 @@ struct FADT {
 
 extern const FADT* fadt;
 
+const int kPMTimerFreq = 3579545;
+
+void WaitMilliseconds(unsigned long msec);
 void Initialize(const RSDP& rsdp);
 
 }

@@ -3,6 +3,7 @@
 #include <cstring>
 #include <cstdlib>
 #include "logger.hpp"
+#include "asmfunc.h"
 
 namespace {
 
@@ -66,6 +67,20 @@ size_t XSDT::Count() const {
 }
 
 const FADT* fadt;
+
+void WaitMilliseconds(unsigned long msec) {
+  const bool pm_timer_32 = (fadt->flags >> 8) & 1;
+  const uint32_t start = IoIn32(fadt->pm_tmr_blk); // 以前作成した IO ポート番号から値を読み出すアセンブリで実装した関数を使用する。
+  uint32_t end = start + kPMTimerFreq * msec / 1000;
+  if (!pm_timer_32) {
+    end &= 0x00ffffffu;
+  }
+
+  if (end < start) {
+    while (IoIn32(fadt->pm_tmr_blk) >= start);
+  }
+  while (IoIn32(fadt->pm_tmr_blk) < end);
+}
 
 void Initialize(const RSDP& rsdp) {
   if (!rsdp.IsValid()) {
