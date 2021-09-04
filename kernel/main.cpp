@@ -55,7 +55,7 @@ void InitializeMainWindow() {
   main_window_layer_id = layer_manager->NewLayer()
     .SetWindow(main_window)
     .SetDraggable(true)
-    .Move({250, 150})
+    .Move({300, 250})
     .ID();
 
   layer_manager->UpDown(main_window_layer_id, std::numeric_limits<int>::max());
@@ -76,7 +76,7 @@ void InitializeTextWindow() {
   text_window_layer_id = layer_manager->NewLayer()
     .SetWindow(text_window)
     .SetDraggable(true)
-    .Move({450, 250})
+    .Move({500, 350})
     .ID();
 
   layer_manager->UpDown(text_window_layer_id, std::numeric_limits<int>::max());
@@ -123,7 +123,7 @@ void InitializeTaskBWindow() {
   task_b_window_layer_id = layer_manager->NewLayer()
     .SetWindow(task_b_window)
     .SetDraggable(true)
-    .Move({450, 150})
+    .Move({500, 250})
     .ID();
 
   layer_manager->UpDown(task_b_window_layer_id, std::numeric_limits<int>::max());
@@ -161,13 +161,17 @@ extern "C" void KernelMainNewStack(
   InitializeGraphics(frame_buffer_config_ref);
   InitializeConsole();
 
-  printk(" ##   ##                     #####    ##### \n");
-  printk(" ##   ##                    ##   ##  ##   ##\n");
-  printk(" ##   ##   ####    #####    ##   ##  #      \n");
-  printk(" #######  ##  ##   ##  ##   ##   ##   ##### \n");
-  printk(" ##   ##  ##  ##   ##  ##   ##   ##       ##\n");
-  printk(" ##   ##  ##  ##   ##  ##   ##   ##  ##   ##\n");
-  printk(" ##   ##   ####    ##  ##    #####    ##### \n");
+  printk("\n");
+  printk("\n");
+  printk("                                                     #\n");
+  printk(" ##   ##                     #####    #####         ##\n");
+  printk(" ##   ##                    ##   ##  ##   ##       ###\n");
+  printk(" ##   ##   ####    #####    ##   ##  #            ####\n");
+  printk(" #######  ##  ##   ##  ##   ##   ##   #####      #####\n");
+  printk(" ##   ##  ##  ##   ##  ##   ##   ##       ##    ######\n");
+  printk(" ##   ##  ##  ##   ##  ##   ##   ##  ##   ##   #######\n");
+  printk(" ##   ##   ####    ##  ##    #####    #####   ########\n");
+  printk("\n");
   printk("\n");
 
   SetLogLevel(kWarn);
