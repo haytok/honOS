@@ -55,7 +55,7 @@ void InitializeMainWindow() {
   main_window_layer_id = layer_manager->NewLayer()
     .SetWindow(main_window)
     .SetDraggable(true)
-    .Move({300, 100})
+    .Move({250, 150})
     .ID();
 
   layer_manager->UpDown(main_window_layer_id, std::numeric_limits<int>::max());
@@ -76,7 +76,7 @@ void InitializeTextWindow() {
   text_window_layer_id = layer_manager->NewLayer()
     .SetWindow(text_window)
     .SetDraggable(true)
-    .Move({350, 200})
+    .Move({450, 250})
     .ID();
 
   layer_manager->UpDown(text_window_layer_id, std::numeric_limits<int>::max());
@@ -168,7 +168,15 @@ extern "C" void KernelMainNewStack(
   InitializeGraphics(frame_buffer_config_ref);
   InitializeConsole();
 
-  printk("Welcome to HonOS!!!\n");
+  printk(" ##   ##                     #####    ##### \n");
+  printk(" ##   ##                    ##   ##  ##   ##\n");
+  printk(" ##   ##   ####    #####    ##   ##  #      \n");
+  printk(" #######  ##  ##   ##  ##   ##   ##   ##### \n");
+  printk(" ##   ##  ##  ##   ##  ##   ##   ##       ##\n");
+  printk(" ##   ##  ##  ##   ##  ##   ##   ##  ##   ##\n");
+  printk(" ##   ##   ####    ##  ##    #####    ##### \n");
+  printk("\n");
+
   SetLogLevel(kWarn);
 
   InitializeSegmentation();
