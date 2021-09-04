@@ -4,7 +4,7 @@
 
 # 画面
 
-![osbook_day13b](https://user-images.githubusercontent.com/44946173/132105468-804cd70a-5d79-4d23-9a2d-3ae3b1bc28bc.gif)
+![osbook_day13d](https://github.com/dilmnqvovpnmlib/hakiwata/blob/main/content/post/20210830/osbook_day13d.gif)
 
 
 ## 参考
