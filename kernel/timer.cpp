@@ -2,6 +2,7 @@
 
 #include "acpi.hpp"
 #include "interrupt.hpp"
+#include "task.hpp"
 
 namespace {
   const uint32_t kCountMax = 0xffffffffu;
@@ -53,14 +54,23 @@ void TimerManager::AddTimer(const Timer& timer) {
   timers_.push(timer);
 }
 
-void TimerManager::Tick() {
+bool TimerManager::Tick() {
   ++tick_;
 
+  bool task_timer_timeout = false;
   // タイムアウト処理を行う (tick_ は時時刻刻と増える変数で、timeout_ より大きくなるとタイムアウトすると判断する。)
   while (true) {
     const auto& t = timers_.top();
+    // まだタイムアウトしていない。
     if (t.Timeout() > tick_) {
       break;
+    }
+
+    if (t.Value() == kTaskTimerValue) {
+      task_timer_timeout = true;
+      timers_.pop();
+      timers_.push(Timer{tick_ + kTaskTimerPeriod, kTaskTimerValue});
+      continue; // ここで continue する理由って、下の処理を呼びたくないから？
     }
 
     // タイムアウト時に送信できるメッセージを作成する
@@ -71,6 +81,8 @@ void TimerManager::Tick() {
 
     timers_.pop();
   }
+
+  return task_timer_timeout;
 }
 
 TimerManager* timer_manager;
@@ -78,5 +90,10 @@ unsigned long lapic_timer_freq;
 
 // 割り込みハンドラとして定義された関数
 void LAPICTimerOnInterrupt() {
-  timer_manager->Tick();
+  const bool task_timer_timeout = timer_manager->Tick();
+  NotifyEndOfInterrupt();
+
+  if (task_timer_timeout) {
+    SwitchTask();
+  }
 }
