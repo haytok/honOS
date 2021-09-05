@@ -3,7 +3,10 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <deque>
 #include <vector>
+
+#include "error.hpp"
 
 struct TaskContext {
   uint64_t cr3, rip, rflags, reserved1; // offset 0x00
@@ -22,6 +25,9 @@ class Task {
   Task(uint64_t id);
   Task& InitContext(TaskFunc* f, int64_t data);
   TaskContext& Context();
+  uint64_t ID() const;
+  Task& Sleep();
+  Task& Wakeup();
 
   private:
    uint64_t id_;
@@ -33,12 +39,17 @@ class TaskManager {
  public:
   TaskManager();
   Task& NewTask();
-  void SwitchTask();
+  void SwitchTask(bool current_sleep = false); // running_ の先頭の Task を寝かせたい時に ture をセットしてこの関数を呼び出す。
+
+  void Sleep(Task* task);
+  Error Sleep(uint64_t id);
+  void Wakeup(Task* task);
+  Error Wakeup(uint64_t id);
 
  private:
   std::vector<std::unique_ptr<Task>> tasks_{};
   uint64_t latest_id_{0};
-  size_t current_task_index_{0};
+  std::deque<Task*> running_{}; // 実行可能状態あるいは実行状態の Task が並んでいるキュー
 };
 
 extern TaskManager* task_manager;
