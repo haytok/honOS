@@ -4,6 +4,14 @@
 #include "segment.hpp"
 #include "timer.hpp"
 
+namespace {
+  template <class T, class U>
+  void Erase(T& c, const U& value) {
+    auto it = std::remove(c.begin(), c.end(), value);
+    c.erase(it, c.end());
+  }
+}
+
 Task::Task(uint64_t id) : id_{id}, msgs_{} {}
 
 Task& Task::InitContext(TaskFunc* f, int64_t data) {
@@ -63,7 +71,10 @@ std::optional<Message> Task::ReceiveMessage() {
 }
 
 TaskManager::TaskManager() {
-  running_.push_back(&NewTask());
+  Task& task = NewTask()
+    .SetLevel(current_level_)
+    .SetRunning(true);
+  running_[current_level_].push_back(&task);
 }
 
 Task& TaskManager::NewTask() {
@@ -72,31 +83,47 @@ Task& TaskManager::NewTask() {
 }
 
 void TaskManager::SwitchTask(bool current_sleep) {
-  Task* current_task = running_.front();
-  running_.pop_front();
+  auto& level_queue = running_[current_level_];
+  Task* current_task = level_queue.front();
+  level_queue.pop_front();
+
   if (!current_sleep) {
-    running_.push_back(current_task);
+    level_queue.push_back(current_task);
   }
-  Task* next_task = running_.front();
+  if (level_queue.empty()) {
+    level_changed_ = true;
+  }
+
+  if (level_changed_) {
+    level_changed_ = false;
+    for (int lv = kMaxLevel; lv >= 0; --lv) {
+      if (!running_[lv].empty()) {
+        current_level_ = lv;
+        break;
+      }
+    }
+  }
+
+  Task* next_task = running_[current_level_].front();
 
   SwitchContext(&next_task->Context(), &current_task->Context());
 }
 
 void TaskManager::Sleep(Task* task) {
-  auto it = std::find(running_.begin(), running_.end(), task);
+  if (!task->Running()) {
+    return;
+  }
+
+  task->SetRunning(false);
 
   // 現在実行中の Task を Sleep させる。つまり、その Task を running_ のキューから削除し、プロセスを running_ の次の Task に切り返る SwitchContext を呼び出す。
-  if (it == running_.begin()) {
+  if (task == running_[current_level_].front()) {
     SwitchTask(true);
     return;
   }
 
-  if (it == running_.end()) {
-    return;
-  }
-
   // 現在実行中でない他の Task を Sleep させる、つまり running_ からその Task を削除する。
-  running_.erase(it);
+  Erase(running_[task->Level()], task);
 }
 
 Error TaskManager::Sleep(uint64_t id) {
@@ -111,22 +138,34 @@ Error TaskManager::Sleep(uint64_t id) {
   return MAKE_ERROR(Error::kSuccess);
 }
 
-void TaskManager::Wakeup(Task* task) {
-  auto it = std::find(running_.begin(), running_.end(), task);
-
-  if (it == running_.end()) {
-    running_.push_back(task);
+void TaskManager::Wakeup(Task* task, int level) {
+  if (task->Running()) {
+    ChangeLevelRunning(task, level);
+    return;
   }
+
+  if (level < 0) {
+    level = task->Level();
+  }
+
+  task->SetLevel(level);
+  task->SetRunning(true);
+
+  running_[level].push_back(task);
+  if (level > current_level_) {
+    level_changed_ = true;
+  }
+  return;
 }
 
-Error TaskManager::Wakeup(uint64_t id) {
+Error TaskManager::Wakeup(uint64_t id, int level) {
   auto it = std::find_if(tasks_.begin(), tasks_.end(),
                          [id](const auto& t){ return t->ID() == id; });
   if (it == tasks_.end()) {
     return MAKE_ERROR(Error::kNoSuchTask);
   }
 
-  Wakeup(it->get());
+  Wakeup(it->get(), level);
   return MAKE_ERROR(Error::kSuccess);
 }
 
@@ -142,7 +181,37 @@ Error TaskManager::SendMessage(uint64_t id, const Message& msg) {
 }
 
 Task& TaskManager::CurrentTask() {
-  return *running_.front();
+  return *running_[current_level_].front();
+}
+
+// level_changed のフラグを立てるだけで、実際に current_level_ を変更するのは SwichContext 内で行う。
+// ただし、タスクのランキュー間の移動は行う。
+void TaskManager::ChangeLevelRunning(Task* task, int level) {
+  if (level < 0 || level == task->Level()) {
+    return;
+  }
+
+  // 現在実行中でない Task のレベルを変更する。
+  if (task != running_[current_level_].front()) {
+    Erase(running_[task->Level()], task);
+    running_[level].push_back(task);
+    task->SetLevel(level);
+    if (level > current_level_) {
+      level_changed_ = true;
+    }
+    return;
+  }
+
+  // 現在実行中のタスクのレベルを変更する。
+  running_[current_level_].pop_front();
+  running_[level].push_front(task);
+  task->SetLevel(level);
+  if (level >= current_level_) {
+    current_level_ = level;
+  } else {
+    current_level_ = level;
+    level_changed_ = true; // この操作って現在実行中のタスクのレベルをを下げることになるので、再度 current_level_ の調整を行う必要がある。
+  }
 }
 
 TaskManager* task_manager;
