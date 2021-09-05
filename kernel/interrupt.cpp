@@ -3,6 +3,7 @@
 #include "asmfunc.h"
 #include "segment.hpp"
 #include "timer.hpp"
+#include "task.hpp"
 
 // 割り込み記述テーブルを宣言
 std::array<InterruptDescriptor, 256> idt;
@@ -24,25 +25,20 @@ void NotifyEndOfInterrupt() {
 }
 
 namespace {
-  std::deque<Message>* msg_queue;
-
   __attribute__((interrupt))
   void IntHandlerXHCI(InterruptFrame* frame) {
-    msg_queue->push_back(Message{Message::kInterruptXHCI});
+    task_manager->SendMessage(1, Message{Message::kInterruptXHCI});
     // ここでこの関数を呼び出す意味をあまり分かっていない。
     NotifyEndOfInterrupt();
   }
 
   __attribute__((interrupt))
   void IntHandlerLAPICTimer(InterruptFrame* frame) {
-    // msg_queue->push_back(Message{Message::kInterruptLAPICTimer});
     LAPICTimerOnInterrupt();
   }
 }
 
-void InitializeInterrupt(std::deque<Message>* msg_queue) {
-  ::msg_queue = msg_queue;
-
+void InitializeInterrupt() {
   SetIDTEntry(idt[InterruptVector::kXHCI],
               MakeIDTAttr(DescriptorType::kInterruptGate, 0),
               reinterpret_cast<uint64_t>(IntHandlerXHCI),
