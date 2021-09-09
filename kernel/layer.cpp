@@ -70,14 +70,22 @@ void LayerManager::Draw(const Rectangle<int>& area) const {
   screen_->Copy(area.pos, back_buffer_, area);
 }
 
-// layer id が指定される時は、Window::DrawTo の window_area と pos が一致するので、window 全体を再描画する。
 void LayerManager::Draw(unsigned int id) const {
+  Draw(id, {{0, 0}, {-1, -1}});
+}
+
+// layer id が指定される時は、Window::DrawTo の window_area と pos が一致するので、window 全体を再描画する。
+void LayerManager::Draw(unsigned int id, Rectangle<int> area) const {
   bool draw = false;
   Rectangle<int> window_area;
   for (auto layer : layer_stack_) {
     if (layer->ID() == id) {
       window_area.size = layer->GetWindow()->Size();;
       window_area.pos = layer->GetPosition(); // layer の pos_
+      if (area.size.x >= 0 || area.size.y >= 0) {
+        area.pos = area.pos + window_area.pos;
+        window_area = window_area & area;
+      }
       draw = true;
     }
     if (draw) {
@@ -268,6 +276,9 @@ void ProcessLayerMessage(const Message& msg) {
     break;
   case LayerOperation::Draw:
     layer_manager->Draw(arg.layer_id);
+    break;
+  case LayerOperation::DrawArea:
+    layer_manager->Draw(arg.layer_id, {{arg.x, arg.y}, {arg.w, arg.h}});
     break;
   }
 }
