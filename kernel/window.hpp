@@ -60,6 +60,8 @@ class ToplevelWindow : public Window {
  public:
   static constexpr Vector2D<int> kTopLeftMargin{4, 24};
   static constexpr Vector2D<int> kBottomRightMargin{4, 4};
+  static constexpr int kMarginX = kTopLeftMargin.x + kBottomRightMargin.x;
+  static constexpr int kMarginY = kTopLeftMargin.y + kBottomRightMargin.y;
 
   // ただ単に始点の座標を Layer ベースではなく、書き込む領域ベースにする。
   class InnerAreaWriter : public PixelWriter {
@@ -93,4 +95,5 @@ class ToplevelWindow : public Window {
 
 void DrawWindow(PixelWriter& writer, const char* title);
 void DrawTextbox(PixelWriter& writer, Vector2D<int> pos, Vector2D<int> size);
+void DrawTerminal(PixelWriter& writer, Vector2D<int> pos, Vector2D<int> size);
 void DrawWindowTitle(PixelWriter& writer, const char* title, bool active);
