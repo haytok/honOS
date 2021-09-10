@@ -9,8 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Get Data From hakiwata Repository
-      if: ${{ github.event.inputs.packages != null }}
-      run: echo ${{ github.event.inputs.name }}
+        if: ${{ github.event.inputs.packages != null }}
+        run: echo ${{ github.event.inputs.name }}
       # # アプリ側のリポジトリをclone
       # - name: Clone
       #   uses: actions/checkout@v2
