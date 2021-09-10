@@ -24,18 +24,11 @@ jobs:
         id: latest_data_id
         run: |
           python scripts/main.py
-          pwd
-          ls
 
       - name: Update README.md
         run: |
-          echo Hello
-          git status
-          if ! git diff --exit-code --quiet
-          then
-            git config --global user.name dilmnqvovpnmlib
-            git config --global user.email dilmnqvovpnmlib@users.noreply.github.com
-            git add README.md
-            git commit -m 'update README.md'
-            git push origin main
-          fi
+          git config --global user.name dilmnqvovpnmlib
+          git config --global user.email dilmnqvovpnmlib@users.noreply.github.com
+          git add README.md
+          git commit -m 'update README.md'
+          git push origin main
