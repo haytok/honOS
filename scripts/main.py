@@ -31,19 +31,22 @@ def main():
     latest_data = get_latest_data()
     file_name = latest_data['name']
     file_path = latest_data['path']
+    title = file_name.split('.')[0]
     base_content = """\
         # honOS
         
         - [ゼロからのOS自作入門](https://www.amazon.co.jp/%E3%82%BC%E3%83%AD%E3%81%8B%E3%82%89%E3%81%AEOS%E8%87%AA%E4%BD%9C%E5%85%A5%E9%96%80-%E5%86%85%E7%94%B0-%E5%85%AC%E5%A4%AA/dp/4839975868) を参考に自作 OS に取り組む。
         
         # 画面
+
+        ## {}
         
         ![{}]({})
         
         ## 参考
         
         - [uchan-nos/mikanos](https://github.com/uchan-nos/mikanos)
-    """.format(file_name, file_path)
+    """.format(title, file_name, file_path)
 
     docs = textwrap.dedent(base_content)
 
