@@ -1,0 +1,42 @@
+name: Update README.md
+on:
+  # repository_dispatchでサーバ側のymlで指定したevent-type `directory-changes`をフックする
+  repository_dispatch:
+    types: [update-a-blog-of-20210830]
+jobs:
+  update-a-blog-of-20210830:
+    name: Copy Assets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Data From hakiwata Repository
+      if: ${{ github.event.inputs.packages != null }}
+      run: echo ${{ github.event.inputs.name }}
+      # # アプリ側のリポジトリをclone
+      # - name: Clone
+      #   uses: actions/checkout@v2
+      # # サーバ側リポジトリをclone
+      # - name: Clone <サーバ側リポジトリ名>
+      #   uses: actions/checkout@v2
+      #   with:
+      #     repository: <オーナー名>/<サーバ側リポジトリ名>
+      #     path: <サーバ側リポジトリ名>
+      #     token: ${{ secrets.<GitHubシークレットキー名> }}
+      # # サーバ側リポジトリ/Assets以下のファイルをアプリ側リポジトリ/Assetsへコピー
+      # - name: Copy assets files
+      #   run: cp <サーバ側リポジトリ名>/Assets/* Assets
+      # # コピーが済んだためcloneしたサーバ側リポジトリを削除
+      # - name: Clean <サーバ側リポジトリ名>
+      #   run: rm -rf <サーバ側リポジトリ名>
+      # # プルリク作成
+      # - name: Create Pull Request
+      #   uses: peter-evans/create-pull-request@v3
+      #   with:
+      #     token: ${{ secrets.<GitHubシークレットキー名> }}
+      #     commit-message: 'Update Assets'
+      #     branch: feature/asset-files-changes
+      #     base: master
+      #     # 同一ブランチ名にならないよう後ろにタイムスタンプを付加
+      #     branch-suffix: timestamp
+      #     delete-branch: true
+      #     # レビュワーの指定
+      #     reviewers: <ユーザ名 or グループ名など>
