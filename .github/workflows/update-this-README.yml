@@ -24,6 +24,8 @@ jobs:
         id: latest_data_id
         run: |
           python scripts/main.py
+          pwd
+          ls
 
       - name: Update README.md
         run: |
