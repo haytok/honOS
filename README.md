@@ -4,6 +4,8 @@
 
 # 画面
 
+## osbook_day15d
+
 ![osbook_day15d.gif](https://github.com/dilmnqvovpnmlib/hakiwata/blob/main/content/post/20210830/media/osbook_day15d.gif)
 
 ## 参考
