@@ -24,7 +24,6 @@ jobs:
         id: latest_data_id
         run: |
           python scripts/main.py
-          mv scripts/README.md README.md
 
       - name: Update README.md
         run: |
