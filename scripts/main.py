@@ -31,7 +31,6 @@ def main():
     latest_data = get_latest_data()
     file_name = latest_data['name']
     file_path = latest_data['path']
-    print(file_name)
     base_content = """\
         # honOS
         
