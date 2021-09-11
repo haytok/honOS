@@ -29,6 +29,7 @@ jobs:
         run: |
           git config --global user.name dilmnqvovpnmlib
           git config --global user.email dilmnqvovpnmlib@users.noreply.github.com
+          git pull
           git add README.md
           git commit -m 'update README.md'
           git push origin main
