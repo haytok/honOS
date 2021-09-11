@@ -71,6 +71,7 @@ class ActiveLayer {
 };
 
 extern ActiveLayer* active_layer;
+extern std::map<unsigned int, uint64_t>* layer_task_map; // layer と task の関連性を保持した変数
 
 void InitializeLayer();
 void ProcessLayerMessage(const Message& msg);
