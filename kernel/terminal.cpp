@@ -2,7 +2,8 @@
 
 #include "font.hpp"
 #include "layer.hpp"
-#include "logger.hpp"
+
+#include <cstring>
 
 Terminal::Terminal() {
   window_ = std::make_shared<ToplevelWindow>(
@@ -16,6 +17,8 @@ Terminal::Terminal() {
     .SetWindow(window_)
     .SetDraggable(true)
     .ID();
+
+  Print(">");
 }
 
 Rectangle<int> Terminal::BlinkCursor() {
@@ -35,12 +38,13 @@ Rectangle<int> Terminal::InputKey(
     linebuf_[linebuf_index_] = 0;
     linebuf_index_ = 0;
     cursor_.x = 0;
-    Log(kWarn, "Line; %s\n", &linebuf_[0]);
     if (cursor_.y < kRows - 1) {
       ++cursor_.y;
     } else {
       Scroll1();
     }
+    ExecuteLine();
+    Print(">");
     draw_area.pos = ToplevelWindow::kTopLeftMargin;
     draw_area.size = window_->InnerSize();
   } else if (ascii == '\b') {
@@ -85,6 +89,55 @@ void Terminal::Scroll1() {
   window_->Move(ToplevelWindow::kTopLeftMargin + Vector2D<int>{4, 4}, move_src);
   FillRectangle(*window_->InnerWriter(),
                 {4, 4 + 16 * cursor_.y}, {8 * kColumns, 16}, {0, 0, 0});
+}
+
+void Terminal::ExecuteLine() {
+  char* command = &linebuf_[0];
+  char* first_arg = strchr(&linebuf_[0], ' '); // 一番初め見つかる空白文字へのポインタを返す。
+  if (first_arg) {
+    *first_arg = 0; // 一番初めに見つかった空白文字に塗る文字を入れて、文字列の終端を表す。
+    ++first_arg; // command の空白スペースが空いた次の引数が入る。
+  }
+  if (strcmp(command, "echo") == 0) {
+    if (first_arg) {
+      Print(first_arg);
+    }
+    Print("\n");
+  } else if (command[0] != 0) {
+    Print("no such command: ");
+    Print(command);
+    Print("\n");
+  }
+}
+
+void Terminal::Print(const char* s) {
+  DrawCursor(false);
+
+  auto newline = [this]() {
+    cursor_.x = 0;
+    if (cursor_.y < kRows - 1) {
+      ++cursor_.y;
+    } else {
+      Scroll1();
+    }
+  };
+
+  while (*s) {
+    if (*s == '\n') {
+      newline();
+    } else {
+      WriteAscii(*window_->Writer(), CalcCursorPos(), *s, {255, 255, 255});
+      if (cursor_.x == kColumns - 1) {
+        newline();
+      } else {
+        ++cursor_.x;
+      }
+    }
+
+    ++s;
+  }
+
+  DrawCursor(true);
 }
 
 void TaskTerminal(uint64_t task_id, int64_t data) {
