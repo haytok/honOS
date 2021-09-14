@@ -458,3 +458,23 @@ git checkout refs/tags/<tag 名>
 
 
 - 本日のドライバを変更しても修正が反映されない問題が生じた。これは Makefile を `osbook_day11a` の tag のブランチのものに書き換えると変更が反映された。おそらく、ドライバを修正してからビルドが反映されていなかった？
+
+# osbook_day17a
+
+- 以下のファイル `test.sh` を用意する。
+
+```bash
+echo Start
+echo $0
+echo $1
+echo End
+```
+
+- `bash test.sh hoge` を実行すると、その結果は以下のようになる。
+
+```bash
+Start
+test.sh
+hoge
+End
+```
