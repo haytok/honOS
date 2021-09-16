@@ -478,3 +478,20 @@ test.sh
 hoge
 End
 ```
+
+# osbook_day18b
+
+- 以下の内容を記述した `test.sh` を用意する。
+
+```bash
+echo ${1:-}
+```
+
+- このファイルを以下のように実行すると、次のような結果が得られる。
+
+```bash
+> bash test.sh
+
+> bash test.sh hello
+hello
+```
