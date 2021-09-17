@@ -4,8 +4,43 @@
 #include "layer.hpp"
 #include "pci.hpp"
 #include "asmfunc.h"
+#include "elf.hpp"
 
 #include <cstring>
+
+
+namespace {
+// C 言語の main(int argc, char** argv) の argv のオブジェクトを作成するイメージ。
+// argv にはその実行ファイル名とそれに続く引数が格納されている。
+std::vector<char*> MakeArgVector(char* command, char* first_arg) {
+  std::vector<char*> argv;
+  argv.push_back(command);
+
+  char* p = first_arg;
+  while (true) {
+    // 引数の一番初めの空白スペースをスキップする。
+    while (isspace(p[0])) {
+      ++p;
+    }
+    if (p[0] == 0) {
+      break;
+    }
+    // この時点でポインタ p は引数の文字列の先頭にある。
+    argv.push_back(p);
+
+    while (p[0] != 0 && !isspace(p[0])) {
+      ++p;
+    }
+    if (p[0] == 0) {
+      break;
+    }
+    p[0] = 0;
+    ++p;
+  }
+
+  return argv;
+}
+}
 
 Terminal::Terminal() {
   window_ = std::make_shared<ToplevelWindow>(
@@ -186,13 +221,13 @@ void Terminal::ExecuteLine() {
       Print(command);
       Print("\n");
     } else {
-      ExecuteFile(*file_entry);
+      ExecuteFile(*file_entry, command, first_arg);
     }
   }
 }
 
 // cat コマンドでファイルを読み出すのと処理が似ている。
-void Terminal::ExecuteFile(const fat::DirectoryEntry& file_entry) {
+void Terminal::ExecuteFile(const fat::DirectoryEntry& file_entry, char* command, char* first_arg) {
   auto cluster = file_entry.FirstCluster();
   auto remain_bytes = file_entry.file_size;
 
@@ -210,9 +245,26 @@ void Terminal::ExecuteFile(const fat::DirectoryEntry& file_entry) {
     cluster = fat::NextCluster(cluster);
   }
 
-  using Func = void ();
-  auto f = reinterpret_cast<Func*>(&file_buf[0]);
-  f();
+  auto elf_header = reinterpret_cast<Elf64_Ehdr*>(&file_buf[0]);
+  // ELF 形式のフォーマットで無い時
+  if (memcmp(elf_header->e_ident, "\x7f" "ELF", 4) != 0) {
+    using Func = void ();
+    auto f = reinterpret_cast<Func*>(&file_buf[0]);
+    f();
+    return;
+  }
+
+  auto argv = MakeArgVector(command, first_arg);
+
+  auto entry_addr = elf_header->e_entry;
+  entry_addr += reinterpret_cast<uintptr_t>(&file_buf[0]);
+  using Func = int (int, char**);
+  auto f = reinterpret_cast<Func*>(entry_addr);
+  auto ret = f(argv.size(), &argv[0]);
+
+  char s[64];
+  sprintf(s, "app exited. ret = %d\n", ret);
+  Print(s);
 }
 
 void Terminal::Print(char c) {
