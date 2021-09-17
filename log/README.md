@@ -495,3 +495,20 @@ echo ${1:-}
 > bash test.sh hello
 hello
 ```
+
+# osbook_day18c
+
+- `rpn.cpp` を実行した結果
+
+```bash
+> clang++ rpn.cpp
+> ./a.out
+> echo $?
+0
+> ./a.out 1 2 +
+> echo $?
+3
+```
+
+- `std::vector::push_back` は新たな要素を末尾に追加する。
+  - [std::vector::push_back](https://cpprefjp.github.io/reference/vector/vector/push_back.html)
