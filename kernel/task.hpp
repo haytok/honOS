@@ -59,7 +59,7 @@ class TaskManager {
 
   TaskManager();
   Task& NewTask();
-  void SwitchTask(bool current_sleep = false); // running_ の先頭の Task を寝かせたい時に ture をセットしてこの関数を呼び出す。
+  void SwitchTask(const TaskContext& current_ctx); // running_ の先頭の Task を寝かせたい時に ture をセットしてこの関数を呼び出す。
 
   void Sleep(Task* task);
   Error Sleep(uint64_t id);
@@ -76,6 +76,7 @@ class TaskManager {
   bool level_changed_{false};
 
   void ChangeLevelRunning(Task* task, int level);
+  Task* RotateCurrentRunQueue(bool current_sleep);
 };
 
 extern TaskManager* task_manager;

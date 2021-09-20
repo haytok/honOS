@@ -43,7 +43,7 @@ LoadIDT:
 ; void LoadGDT(sizeof(gdt) - 1, reinterpret_cast<uintptr_t>(&gdt[0]))
 ; void LoadGDT(uint16_t limit, uint64_t offset)
 global LoadGDT
-LoadGDT;
+LoadGDT:
     push rbp
     mov rbp, rsp
     sub rsp, 10
@@ -147,7 +147,10 @@ SwitchContext:
     mov [rsi + 0x38], rdx
 
     fxsave [rsi + 0xc0]
+    ; fall through to RestoreContext
 
+global RestoreContext
+RestoreContext:
     ; next_ctx の値をレジスタに書き込む
     ; iret 用のスタックフレーム
     push qword [rdi + 0x28] ; SS
@@ -195,3 +198,75 @@ CallApp:
     push rdx ; CS
     push r8  ; RIP
     o64 retf
+
+;void LAPICTimerOnInterrupt(const TaskContext& ctx_task)
+extern LAPICTimerOnInterrupt
+
+global IntHandlerLAPICTimer
+IntHandlerLAPICTimer:
+    push rbp
+    mov rbp, rsp
+
+    ; レジスタに入っている値を用いてスタック上に TaskContext の構造体を構築する。
+    sub rsp, 512
+    fxsave [rsp] ; よくわからん命令
+    push r15
+    push r14
+    push r13
+    push r12
+    push r11
+    push r10
+    push r9
+    push r8
+    push qword [rbp] ; RBP
+    push qword [rbp + 0x20] ; RSP
+    push rsi
+    push rdi
+    push rdx
+    push rcx
+    push rbx
+    push rax
+
+    mov ax, fs
+    mov bx, gs
+    mov rcx, cr3
+
+    push rbx                ; GS
+    push rax                ; FS
+    push qword [rbp + 0x28] ; SS
+    push qword [rbp + 0x10] ; CS
+    push rbp                ; reserved1
+    push qword [rbp + 0x18] ; RFLAGS
+    push qword [rbp + 0x08] ; RIP
+    push rcx                ; CR3
+
+    mov rdi, rsp
+    call LAPICTimerOnInterrupt
+
+    add rsp, 8*8 ; CR3 から GS までを無視
+    pop rax
+    pop rbx
+    pop rcx
+    pop rdx
+    pop rdi
+    pop rsi
+    add rsp, 16 ; RSP と RBP を無視
+    pop r8
+    pop r9
+    pop r10
+    pop r11
+    pop r12
+    pop r13
+    pop r14
+    pop r15
+    fxrstor [rsp]
+
+    mov rsp, rbp
+    pop rbp
+    iretq
+
+;void LoadTR(uint16_t sel)
+global LoadTR
+LoadTR:
+    ltr di
+    ret

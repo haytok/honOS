@@ -31,11 +31,6 @@ namespace {
     // ここでこの関数を呼び出す意味をあまり分かっていない。
     NotifyEndOfInterrupt();
   }
-
-  __attribute__((interrupt))
-  void IntHandlerLAPICTimer(InterruptFrame* frame) {
-    LAPICTimerOnInterrupt();
-  }
 }
 
 void InitializeInterrupt() {
