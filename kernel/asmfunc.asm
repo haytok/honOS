@@ -184,3 +184,14 @@ SwitchContext:
     mov rdi, [rdi + 0x60]
 
     o64 iret
+
+;void CallApp(int argc, char** argv, uint16_t cs, uint16_t ss, uint64_t rip, uint64_t rsp)
+global CallApp
+CallApp:
+    push rbp
+    mov rbp, rsp
+    push rcx ; SS
+    push r9  ; RSP
+    push rdx ; CS
+    push r8  ; RIP
+    o64 retf
