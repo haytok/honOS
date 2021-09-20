@@ -512,3 +512,7 @@ hello
 
 - `std::vector::push_back` は新たな要素を末尾に追加する。
   - [std::vector::push_back](https://cpprefjp.github.io/reference/vector/vector/push_back.html)
+
+# osbook_day20b
+
+- `SetupSegments` は、`GDT` を再構築するための関数である。
