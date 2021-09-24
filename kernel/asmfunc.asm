@@ -270,3 +270,36 @@ global LoadTR
 LoadTR:
     ltr di
     ret
+
+;void WriteMSR(uint32_t msr, uint64_t value) rdi, rsi
+global WriteMSR
+WriteMSR:
+    mov rdx, rsi
+    shr rdx, 32
+    mov eax, esi
+    mov ecx, edi ; ECX レジスタに MSR レジスタ番号を設定する。
+    wrmsr
+    ret
+
+extern syscall_table
+; syscall が実行されると、SyscallEntry が起動する。
+; void SyscallEntry(void);
+global SyscallEntry
+SyscallEntry:
+    push rbp
+    push rcx
+    push r11
+
+    mov rcx, r10
+    and eax, 0x7fffffff
+    mov rbp, rsp
+    and rsp, 0xfffffffffffffff0
+
+    call [syscall_table + 8 * eax]
+
+    mov rsp, rbp
+
+    pop r11
+    pop rcx
+    pop rbp
+    o64 sysret
