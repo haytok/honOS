@@ -169,6 +169,7 @@ extern "C" void KernelMainNewStack(
 
   InitializeTask(); // 内部で task_manager を初期化している。
   Task& main_task = task_manager->CurrentTask();
+  terminals = new std::map<uint64_t, Terminal*>;
   const uint64_t task_terminal_id = task_manager->NewTask()
     .InitContext(TaskTerminal, 0)
     .Wakeup()
@@ -241,7 +242,7 @@ extern "C" void KernelMainNewStack(
         }
         break;
       case Message::kLayer:
-        ProcessLayerMessage(*msg);
+        ProcessLayerMessage(*msg); // この中で layer_manager->Draw() が呼び出され、再描画を行っている。
         __asm__("cli");
           task_manager->SendMessage(msg->src_task, Message{Message::kLayerFinish});
         __asm__("sti");

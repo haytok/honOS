@@ -1,8 +1,7 @@
 #include <cstring>
 #include <cstdlib>
-#include <cstdint>
+#include <cstdio>
 
-#include "../../kernel/logger.hpp"
 
 int stack_ptr;
 long stack[100];
@@ -21,7 +20,7 @@ void Push(long value) {
 
 // この関数 SyscallLogString 自体は apps/rpn/syscall.asm の中で定義されている。
 // この関数の中で syscall が呼び出され、sycall_table に登録されたシステムコール番号に応じた関数が実行される。
-extern "C" int64_t SyscallLogString(LogLevel, const char*);
+// extern "C" int64_t SyscallLogString(LogLevel, const char*);
 
 extern "C" int main(int argc, char** argv) {
   stack_ptr = -1;
@@ -31,23 +30,22 @@ extern "C" int main(int argc, char** argv) {
       long b = Pop();
       long a = Pop();
       Push(a + b);
-      SyscallLogString(kWarn, "+");
     } else if (strcmp(argv[i], "-") == 0) {
       long b = Pop();
       long a = Pop();
       Push(a - b);
-      SyscallLogString(kWarn, "-");
     } else {
       long a = atol(argv[i]);
       Push(a);
-      SyscallLogString(kWarn, "#");
     }
   }
 
-  if (stack_ptr < 0) {
-    return 0;
+  long result = 0;
+  if (stack_ptr >= 0) {
+    result = Pop();
   }
-  SyscallLogString(kWarn, "\nhello, this is rpn\n");
+
+  printf("%ld\n", result);
   while (1);
   // return static_cast<int>(Pop());
 }
