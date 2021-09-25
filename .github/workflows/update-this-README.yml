@@ -29,6 +29,9 @@ jobs:
 
       - name: Update README.md
         run: |
+          # すでに作成されているファイル (README.md) に修正が加わると、この then 以降の処理が走る。
+          # 一方、gif が更新されずブログの文章のみが変更されがときは、上のスクリプトで README.md が更新されない。
+          # したがって、以下の README.md の変更を表すコミットを打つ必要がない。
           if ! git diff --exit-code --quiet
           then
             git config --global user.name dilmnqvovpnmlib
@@ -36,5 +39,5 @@ jobs:
             git pull
             git add README.md
             git commit -m 'update README.md'
+            git push origin main
           fi
-          git push origin main
