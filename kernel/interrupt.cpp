@@ -97,12 +97,17 @@ namespace {
 void InitializeInterrupt() {
   auto set_idt_entry = [](int irq, auto handler) {
     SetIDTEntry(idt[irq],
-                MakeIDTAttr(DescriptorType::kInterruptGate, 0),
+                MakeIDTAttr(DescriptorType::kInterruptGate, 0), // MakeIDTAttr は interrupt.hpp に定義されている。
                 reinterpret_cast<uint64_t>(handler),
                 kKernelCS);
   };
   set_idt_entry(InterruptVector::kXHCI, IntHandlerXHCI);
-  set_idt_entry(InterruptVector::kLAPICTimer, IntHandlerLAPICTimer);
+  // タイマ割り込みの場合のみ IST が指すスタック領域を使用する。
+  SetIDTEntry(idt[InterruptVector::kLAPICTimer],
+              MakeIDTAttr(DescriptorType::kInterruptGate, 0,
+                          true, kISTForTimer),
+              reinterpret_cast<uint64_t>(IntHandlerLAPICTimer),
+              kKernelCS);
   set_idt_entry(0,  IntHandlerDE);
   set_idt_entry(1,  IntHandlerDB);
   set_idt_entry(3,  IntHandlerBP);
