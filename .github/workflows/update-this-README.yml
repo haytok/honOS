@@ -3,6 +3,8 @@ on:
   # repository_dispatchでサーバ側のymlで指定したevent-type `directory-changes`をフックする
   repository_dispatch:
     types: [update-a-blog-of-20210830]
+  workflow_dispatch:
+
 jobs:
   update-a-blog-of-20210830:
     name: Update README.md
@@ -27,9 +29,12 @@ jobs:
 
       - name: Update README.md
         run: |
-          git config --global user.name dilmnqvovpnmlib
-          git config --global user.email dilmnqvovpnmlib@users.noreply.github.com
-          git pull
-          git add README.md
-          git commit -m 'update README.md'
+          if ! git diff --exit-code --quiet
+          then
+            git config --global user.name dilmnqvovpnmlib
+            git config --global user.email dilmnqvovpnmlib@users.noreply.github.com
+            git pull
+            git add README.md
+            git commit -m 'update README.md'
+          fi
           git push origin main
