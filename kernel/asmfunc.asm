@@ -188,15 +188,25 @@ RestoreContext:
 
     o64 iret
 
-;void CallApp(int argc, char** argv, uint16_t cs, uint16_t ss, uint64_t rip, uint64_t rsp)
+; rdi, rsi, rdx, r10, r8, r9
+;void CallApp(int argc, char** argv, uint16_t ss,
+;             uint64_t rip, uint64_t rsp, uint64_t* os_stack_ptr)
 global CallApp
 CallApp:
+    ; OS スタックの情報を保持する
+    push rbx
     push rbp
-    mov rbp, rsp
-    push rcx ; SS
-    push r9  ; RSP
+    push r12
+    push r13
+    push r14
+    push r15
+    mov [r9], rsp
+
+    push rdx ; SS
+    push r8  ; RSP
+    add rdx, 8
     push rdx ; CS
-    push r8  ; RIP
+    push rcx ; RIP
     o64 retf
 
 ;void LAPICTimerOnInterrupt(const TaskContext& ctx_task)
@@ -290,6 +300,8 @@ SyscallEntry:
     push rcx
     push r11
 
+    push rax ; システムコール番号を保存
+
     mov rcx, r10
     and eax, 0x7fffffff
     mov rbp, rsp
@@ -299,7 +311,28 @@ SyscallEntry:
 
     mov rsp, rbp
 
+    pop rsi ; システムコール番号を保存
+    cmp esi, 0x80000002
+    je .exit
+
     pop r11
     pop rcx
     pop rbp
     o64 sysret
+
+.exit:
+    ; rax には SyscallExit を実行した結果の返り値が入っている。
+    ; rax に task.OSStackPointer() が rdx に static_cast<int>(arg1) が引き渡される。
+    ; アプリを終了させて、OS に戻るための処理を行う。
+    mov rsp, rax
+    mov eax, edx
+
+    ; CallApp で詰んだ OS スタックの情報を保持する
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop rbp
+    pop rbx
+
+    ret

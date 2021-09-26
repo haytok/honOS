@@ -22,7 +22,9 @@ void Push(long value) {
 // この関数の中で syscall が呼び出され、sycall_table に登録されたシステムコール番号に応じた関数が実行される。
 // extern "C" int64_t SyscallLogString(LogLevel, const char*);
 
-extern "C" int main(int argc, char** argv) {
+extern "C" void SyscallExit(int exit_code);
+
+extern "C" void main(int argc, char** argv) {
   stack_ptr = -1;
 
   for (int i = 1; i < argc; ++i) {
@@ -46,6 +48,7 @@ extern "C" int main(int argc, char** argv) {
   }
 
   printf("%ld\n", result);
-  while (1);
+  SyscallExit(static_cast<int>(result));
   // return static_cast<int>(Pop());
+  // ここで以前呼び出していた while (1); を呼び出さずに済み、アプリが結果を返すと、アプリ側に制御が移る。
 }

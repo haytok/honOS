@@ -50,6 +50,15 @@ SYSCALL(PutString) {
   return { 0, EBADF };
 }
 
+SYSCALL(Exit) {
+  __asm__("cli");
+  auto& task = task_manager->CurrentTask();
+  __asm__("sti");
+  // アセンブリでシステムコール番号が 0x80000002 の処理が呼び出された時に役立つ返り値である。
+  // rax に task.OSStackPointer() が rdx に static_cast<int>(arg1) が引き渡される。
+  return { task.OSStackPointer(), static_cast<int>(arg1) };
+}
+
 #undef SYSCALL
 
 }
@@ -57,9 +66,10 @@ SYSCALL(PutString) {
 using SyscallFuncType = syscall::Result (uint64_t, uint64_t, uint64_t,
                                  uint64_t, uint64_t, uint64_t);
 
-extern "C" std::array<SyscallFuncType*, 2> syscall_table{
+extern "C" std::array<SyscallFuncType*, 3> syscall_table{
   /* 0x00 */ syscall::LogString,
   /* 0x01 */ syscall::PutString,
+  /* 0x02 */ syscall::Exit,
 };
 
 void InitializeSyscall() {
