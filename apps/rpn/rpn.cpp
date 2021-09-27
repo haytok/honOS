@@ -1,6 +1,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
+#include "../syscall.h"
 
 
 int stack_ptr;
@@ -21,8 +22,6 @@ void Push(long value) {
 // この関数 SyscallLogString 自体は apps/rpn/syscall.asm の中で定義されている。
 // この関数の中で syscall が呼び出され、sycall_table に登録されたシステムコール番号に応じた関数が実行される。
 // extern "C" int64_t SyscallLogString(LogLevel, const char*);
-
-extern "C" void SyscallExit(int exit_code);
 
 extern "C" void main(int argc, char** argv) {
   stack_ptr = -1;
