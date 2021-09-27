@@ -335,4 +335,4 @@ SyscallEntry:
     pop rbp
     pop rbx
 
-    ret
+    ret ; ret が呼ばれると、call された時に積まれる戻りアドレスの位置に処理が移る。
