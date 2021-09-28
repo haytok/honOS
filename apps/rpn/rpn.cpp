@@ -47,7 +47,7 @@ extern "C" void main(int argc, char** argv) {
   }
 
   printf("%ld\n", result);
-  SyscallExit(static_cast<int>(result));
+  exit(static_cast<int>(result));
   // return static_cast<int>(Pop());
   // ここで以前呼び出していた while (1); を呼び出さずに済み、アプリが結果を返すと、アプリ側に制御が移る。
 }
