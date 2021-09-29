@@ -245,3 +245,8 @@ void InitializeTask() {
     Timer{timer_manager->CurrentTick() + kTaskTimerPeriod, kTaskTimerValue}); // プリエンプティブマルチタスクを開始するための割り込みタイマを設定する。
   __asm__("sti");
 }
+
+__attribute__((no_caller_saved_registers))
+extern "C" uint64_t GetCurrentTaskOSStackPointer() {
+  return task_manager->CurrentTask().OSStackPointer();
+}

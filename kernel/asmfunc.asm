@@ -291,6 +291,7 @@ WriteMSR:
     wrmsr
     ret
 
+extern GetCurrentTaskOSStackPointer
 extern syscall_table
 ; syscall が実行されると、SyscallEntry が起動する。
 ; void SyscallEntry(void);
@@ -305,6 +306,22 @@ SyscallEntry:
     mov rcx, r10
     and eax, 0x7fffffff
     mov rbp, rsp
+
+    ; システムコールを OS 用のスタックで実行するための準備
+    and rsp, 0xfffffffffffffff0
+    push rax ; アプリケーション用で必要なレジスタを一時スタック上に退避させる。
+    push rdx ; アプリケーション用で必要なレジスタを一時スタック上に退避させる。
+    cli
+    call GetCurrentTaskOSStackPointer
+    sti
+    mov rdx, [rsp + 0] ; アプリケーション用のスタックに積まれている RDX を RDX に一時保存する。
+    mov [rax - 16], rdx ; RDX の値を OS 用のスタックにコピーする、
+    mov rdx, [rsp + 8] ; RAX
+    mov [rax - 8], rdx
+
+    lea rsp, [rax - 16] ; OS 用のスタックの RSP を進める。
+    pop rdx
+    pop rax
     and rsp, 0xfffffffffffffff0
 
     call [syscall_table + 8 * eax]

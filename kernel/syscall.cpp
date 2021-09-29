@@ -12,6 +12,8 @@
 #include "terminal.hpp"
 #include "font.hpp"
 #include "timer.hpp"
+#include "keyboard.hpp"
+#include "app_event.hpp"
 
 namespace syscall {
   struct Result {
@@ -75,6 +77,10 @@ SYSCALL(OpenWindow) {
     .Move({x, y})
     .ID();
   active_layer->Activate(layer_id);
+
+  // アクティブなウィンドウにメッセージを送信できるようにする。
+  const auto task_id = task_manager->CurrentTask().ID();
+  layer_task_map->insert(std::make_pair(layer_id, task_id));
   __asm__("sti");
 
   return { layer_id, 0 };
@@ -207,9 +213,54 @@ SYSCALL(CloseWindow) {
   active_layer->Activate(0);
   layer_manager->RemoveLayer(layer_id);
   layer_manager->Draw({layer_pos, win_size});
+  layer_task_map->erase(layer_id);
   __asm__("sti");
 
   return { 0, 0 };
+}
+
+// struct SyscallResult SyscallReadEvent(struct AppEvent* events, size_t len);
+SYSCALL(ReadEvent) {
+  if (arg1 < 0x8000'0000'0000'0000) {
+    return { 0, EFAULT };
+  }
+  const auto app_events = reinterpret_cast<AppEvent*>(arg1);
+  const size_t len = arg2;
+
+  __asm__("cli");
+  auto& task = task_manager->CurrentTask(); // アプリケーションを動かしているターミナルを指す。
+  __asm__("sti");
+  size_t i = 0;
+
+  while (i < len) {
+    __asm__("cli");
+    auto msg = task.ReceiveMessage();
+    if (!msg && i == 0) {
+      task.Sleep();
+      continue;
+    }
+    __asm__("sti");
+
+    if (!msg) {
+      break;
+    }
+
+    switch (msg->type) {
+    case Message::kKeyPush:
+      if (msg->arg.keyboard.keycode == 20 /* Q key */ &&
+          msg->arg.keyboard.modifier & (kLControlBitMask | kRControlBitMask)) {
+        // SyscallReadEvent の第一引数で渡ってきた events (この関数内ではキャストして app_event と言う変数名になっている。) に書きこむ。
+        // このシステムコール側で書き込んだ変数を呼び出し元の winhello 関数で読み出す。
+        app_events[i].type = AppEvent::kQuit;
+        ++i;
+      }
+      break;
+    default:
+      Log(kInfo, "uncaught event type; %u\n", msg->type);
+    }
+  }
+
+  return { i, 0 };
 }
 
 #undef SYSCALL
@@ -219,7 +270,7 @@ SYSCALL(CloseWindow) {
 using SyscallFuncType = syscall::Result (uint64_t, uint64_t, uint64_t,
                                  uint64_t, uint64_t, uint64_t);
 
-extern "C" std::array<SyscallFuncType*, 10> syscall_table{
+extern "C" std::array<SyscallFuncType*, 0xb> syscall_table{
   /* 0x00 */ syscall::LogString,
   /* 0x01 */ syscall::PutString,
   /* 0x02 */ syscall::Exit,
@@ -230,6 +281,7 @@ extern "C" std::array<SyscallFuncType*, 10> syscall_table{
   /* 0x07 */ syscall::WinRedraw,
   /* 0x08 */ syscall::WinDrawLine,
   /* 0x09 */ syscall::CloseWindow,
+  /* 0x0a */ syscall::ReadEvent,
 };
 
 void InitializeSyscall() {
