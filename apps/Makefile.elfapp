@@ -9,7 +9,7 @@ OBJS += ../syscall.o ../newlib_support.o
 all: $(TARGET)
 
 $(TARGET): $(OBJS) Makefile
-	ld.lld $(LDFLAGS) -o $@ $(OBJS) -lc -lc++ -lc++abi
+	ld.lld $(LDFLAGS) -o $@ $(OBJS) -lc -lc++ -lc++abi -lm
 
 # newlib_support.c 用
 %.o: %.c Makefile
