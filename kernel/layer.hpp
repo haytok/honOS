@@ -35,6 +35,7 @@ class LayerManager {
  public:
   void SetWriter(FrameBuffer* screen);
   Layer& NewLayer();
+  void RemoveLayer(unsigned int id);
   void Draw(const Rectangle<int>& area) const;
   // 指定したレイヤーに設定されているウィンドウの描画領域内を再描画する。
   void Draw(unsigned int id) const;
