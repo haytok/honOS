@@ -219,6 +219,8 @@ SYSCALL(CloseWindow) {
   return { 0, 0 };
 }
 
+// winhello アプリケーション内の while (true) で呼び出される。
+// events オブジェクトにメッセージの内容を書きこむことで、アプリケーション側でそのメッセージを読み出す。
 // struct SyscallResult SyscallReadEvent(struct AppEvent* events, size_t len);
 SYSCALL(ReadEvent) {
   if (arg1 < 0x8000'0000'0000'0000) {
@@ -254,6 +256,15 @@ SYSCALL(ReadEvent) {
         app_events[i].type = AppEvent::kQuit;
         ++i;
       }
+      break;
+    case Message::kMouseMove:
+      app_events[i].type = AppEvent::kMouseMove;
+      app_events[i].arg.mouse_move.x = msg->arg.mouse_move.x;
+      app_events[i].arg.mouse_move.y = msg->arg.mouse_move.y;
+      app_events[i].arg.mouse_move.dx = msg->arg.mouse_move.dx;
+      app_events[i].arg.mouse_move.dy = msg->arg.mouse_move.dy;
+      app_events[i].arg.mouse_move.buttons = msg->arg.mouse_move.buttons;
+      ++i;
       break;
     default:
       Log(kInfo, "uncaught event type; %u\n", msg->type);
