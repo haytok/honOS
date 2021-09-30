@@ -37,7 +37,7 @@ namespace {
 
   // マウスが動いていると、アクティブなレイヤのタスクにメッセージが飛ぶ。
   void SendMouseMessage(Vector2D<int> newpos, Vector2D<int> posdiff,
-                        uint8_t buttons) {
+                        uint8_t buttons, uint8_t previous_buttons) {
     const auto act = active_layer->GetActive();
     if (!act) {
       return;
@@ -49,9 +49,9 @@ namespace {
       return;
     }
 
+    const auto relpos = newpos - layer->GetPosition();
     if (posdiff.x != 0 || posdiff.y != 0) {
       // マウスの移動の相対座標を求める。
-      const auto relpos = newpos - layer->GetPosition();
       Message msg{Message::kMouseMove};
       msg.arg.mouse_move.x = relpos.x;
       msg.arg.mouse_move.y = relpos.y;
@@ -61,6 +61,20 @@ namespace {
       // layer_task_map = new std::map<unsigned int, uint64_t>;
       // この定義より、task_it->second が後ろの値の task_id であることがわかる。
       task_manager->SendMessage(task_it->second, msg);
+    }
+
+    if (previous_buttons != buttons) {
+      const auto diff = previous_buttons ^ buttons; // ボタンの状態が違うビットだけ立つ。
+      for (int i = 0; i < 8; ++i) {
+        if ((diff >> i) & 1) {
+          Message msg{Message::kMouseButton};
+          msg.arg.mouse_button.x = relpos.x;
+          msg.arg.mouse_button.y = relpos.y;
+          msg.arg.mouse_button.press = (buttons >> i) & 1; // ボタンが押されているかどうかを判定するフラグ。
+          msg.arg.mouse_button.button = i; // 左ボタンが 0 に該当する。
+          task_manager->SendMessage(task_it->second, msg);
+        }
+      }
     }
   }
 }
@@ -108,7 +122,11 @@ void Mouse::OnInterrupt(uint8_t buttons, int8_t displacement_x, int8_t displacem
     // ポイントは、押した瞬間のマウスの位置が優先されることである。
     auto layer = layer_manager->FindLayerByPosition(position_, layer_id_);
     if (layer && layer->IsDraggable()) {
-      drag_layer_id_ = layer->ID();
+      // タイトルバーをクリックした時のみドラッグできるようにする。
+      const auto y_layer = position_.y - layer->GetPosition().y;
+      if (y_layer < ToplevelWindow::kTopLeftMargin.y) {
+        drag_layer_id_ = layer->ID();
+      }
       active_layer->Activate(layer->ID());
     } else {
       active_layer->Activate(0); // 一番最下層のレイヤをアクティブにする。
@@ -123,7 +141,7 @@ void Mouse::OnInterrupt(uint8_t buttons, int8_t displacement_x, int8_t displacem
 
   // 特に何もドラッグしていずにマウスを動かしているケース
   if (drag_layer_id_ == 0) {
-    SendMouseMessage(newpos, posdiff, buttons);
+    SendMouseMessage(newpos, posdiff, buttons, previous_buttons_);
   }
   previous_buttons_ = buttons;
 }
