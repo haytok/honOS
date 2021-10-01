@@ -8,6 +8,7 @@
 #include "memory_manager.hpp"
 #include "paging.hpp"
 #include "logger.hpp"
+#include "timer.hpp"
 
 #include <cstring>
 #include <limits>
@@ -572,10 +573,19 @@ void TaskTerminal(uint64_t task_id, int64_t data) {
   Task& task = task_manager->CurrentTask();
   Terminal* terminal = new Terminal{task_id};
   layer_manager->Move(terminal->LayerID(), {100, 200});
-  active_layer->Activate(terminal->LayerID());
   layer_task_map->insert(std::make_pair(terminal->LayerID(), task_id));
+  // この位置で呼び出したのは、active_layer->Activate の中で SendWindowActiveMessage を呼び出し、その中で layer_task_map を使って active な layer_id に対応する task_id を求める必要があるからである。
+  active_layer->Activate(terminal->LayerID());
   (*terminals)[task_id] = terminal;
   __asm__("sti");
+
+  auto add_blink_timer = [task_id](unsigned long t) {
+    timer_manager->AddTimer(Timer{t + static_cast<int>(kTimerFreq * 0.5),
+                                  1, task_id});
+  };
+  add_blink_timer(timer_manager->CurrentTick());
+
+  bool window_isactive = false;
 
   while (true) {
     __asm__("cli");
@@ -590,7 +600,8 @@ void TaskTerminal(uint64_t task_id, int64_t data) {
 
     switch (msg->type) {
     case Message::kTimerTimeout:
-      {
+      add_blink_timer(msg->arg.timer.timeout);
+      if (window_isactive) {
         const auto area = terminal->BlinkCursor();
         Message msg = MakeLayerMessage(
           task_id, terminal->LayerID(), LayerOperation::DrawArea, area);
@@ -610,6 +621,9 @@ void TaskTerminal(uint64_t task_id, int64_t data) {
         task_manager->SendMessage(1, msg);
         __asm__("sti");
       }
+      break;
+    case Message::kWindowActive:
+      window_isactive = msg->arg.window_active.activate;
       break;
     default:
       break;
