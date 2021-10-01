@@ -242,7 +242,7 @@ void InitializeTask() {
 
   __asm__("cli");
   timer_manager->AddTimer(
-    Timer{timer_manager->CurrentTick() + kTaskTimerPeriod, kTaskTimerValue}); // プリエンプティブマルチタスクを開始するための割り込みタイマを設定する。
+      Timer{timer_manager->CurrentTick() + kTaskTimerPeriod, kTaskTimerValue, 1}); // プリエンプティブマルチタスクを開始するための割り込みタイマを設定する。
   __asm__("sti");
 }
 

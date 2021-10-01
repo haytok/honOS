@@ -33,6 +33,11 @@ struct SyscallResult SyscallWinDrawLine(
 struct SyscallResult SyscallCloseWindow(uint64_t layer_id_flags);
 struct SyscallResult SyscallReadEvent(struct AppEvent* events, size_t len);
 
+#define TIMER_ONESHOT_REL 1
+#define TIMER_ONESHOT_ABS 0
+struct SyscallResult SyscallCreateTimer(
+    unsigned int type, int timer_value, unsigned long timeout_ms); // timer_value はタイムアウト時に通知される任意の値
+
 #ifdef __cplusplus
 }
 #endif
