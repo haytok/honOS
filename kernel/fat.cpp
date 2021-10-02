@@ -2,6 +2,26 @@
 
 #include <cstring>
 #include <cctype>
+#include <utility>
+
+namespace {
+
+std::pair<const char*, bool>
+NextPathElement(const char* path, char* path_elem) { // path_elem には現在の一番上のディレクトリを書きこむ。
+  const char* next_slash = strchr(path, '/'); // next_slash は / を指している。
+  // / がなく、末尾である時
+  if (next_slash == nullptr) {
+    strcpy(path_elem, path);
+    return { nullptr, false };
+  }
+
+  const auto elem_len = next_slash - path;
+  strncpy(path_elem, path, elem_len);
+  path_elem[elem_len] = '\0';
+  return { &next_slash[1], true };
+}
+
+}
 
 namespace fat {
 
@@ -39,6 +59,15 @@ void ReadName(const DirectoryEntry& entry, char* base, char* ext) {
   }
 }
 
+// ディレクトリエントリのオブジェクト dir[i] をもとに呼び出し元の変数 dest に書き込む。
+void FormatName(const DirectoryEntry& entry, char* dest) {
+  char ext[5] = ".";
+  ReadName(entry, dest, &ext[1]);
+  if (ext[1]) {
+    strcat(dest, ext);
+  }
+}
+
 unsigned long NextCluster(unsigned long cluster) {
   uintptr_t fat_offset =
     boot_volume_image->reserved_sector_count *
@@ -52,25 +81,42 @@ unsigned long NextCluster(unsigned long cluster) {
   return next;
 }
 
-DirectoryEntry* FindFile(const char* name, unsigned long directory_cluster) {
-  if (directory_cluster == 0) {
+std::pair<DirectoryEntry*, bool>
+FindFile(const char* path, unsigned long directory_cluster) {
+  if (path[0] == '/') {
+    directory_cluster = boot_volume_image->root_cluster;
+    ++path;
+  } else if (directory_cluster == 0) {
     directory_cluster = boot_volume_image->root_cluster;
   }
+
+  char path_elem[13]; // 現在のパス
+  const auto [ next_path, post_slash ] = NextPathElement(path, path_elem);
+  const bool path_last = next_path == nullptr || next_path[0] == '\0';
 
   while (directory_cluster != kEndOfClusterchain) {
     auto dir = GetSectorByCluster<DirectoryEntry>(directory_cluster);
     for (int i = 0; i < bytes_per_cluster / sizeof(DirectoryEntry); ++i) {
       // cat コマンドの第一引数から受け取ったファイル名とディレクトリエントリの名前を比較する
       // DirectoryEntry の構造体の先頭に name があるから、以下のような比較が可能？
-      if (NameIsEqual(dir[i], name)) {
-        return &dir[i];
+      if (dir[i].name[0] == 0x00) {
+        goto not_found;
+      } else if (!NameIsEqual(dir[i], path_elem)) {
+        continue;
+      }
+
+      if (dir[i].attr == Attribute::kDirectory && !path_last) {
+        return FindFile(next_path, dir[i].FirstCluster());
+      } else {
+        return { &dir[i], post_slash };
       }
     }
 
     directory_cluster = NextCluster(directory_cluster);
   }
 
-  return nullptr;
+not_found:
+  return { nullptr, post_slash };
 }
 
 // cat コマンドで受け取った引数 name をディレクトリエントリの形式 name83 に変換し、比較する。
