@@ -477,10 +477,7 @@ Error Terminal::ExecuteFile(const fat::DirectoryEntry& file_entry, char* command
   auto elf_header = reinterpret_cast<Elf64_Ehdr*>(&file_buf[0]);
   // ELF 形式のフォーマットで無い時
   if (memcmp(elf_header->e_ident, "\x7f" "ELF", 4) != 0) {
-    using Func = void ();
-    auto f = reinterpret_cast<Func*>(&file_buf[0]);
-    f();
-    return MAKE_ERROR(Error::kSuccess);
+    return MAKE_ERROR(Error::kInvalidFile);
   }
 
   // 実行可能ファイルをロード刷る前に PML4 を設定する。

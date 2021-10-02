@@ -341,8 +341,16 @@ SyscallEntry:
     ; rax には SyscallExit を実行した結果の返り値が入っている。
     ; rax に task.OSStackPointer() が rdx に static_cast<int>(arg1) が引き渡される。
     ; アプリを終了させて、OS に戻るための処理を行う。
-    mov rsp, rax
-    mov eax, edx
+    mov rdi, rax
+    mov esi, edx
+    jmp ExitApp
+
+; アプリケーションの終了で呼ばれる exit 内でも CPL を確認して exit するようにする。
+; void ExitApp(uint64_t rsp, int32_t ret_val);
+global ExitApp
+ExitApp:
+    mov rsp, rdi
+    mov eax, esi
 
     ; CallApp で詰んだ OS スタックの情報を保持する
     pop r15
