@@ -1,7 +1,7 @@
 .PHONY: build
 build:
-	./build.sh
+	APPS_DIR=apps ./build.sh
 
 .PHONY: run
 run:
-	./build.sh run
+	APPS_DIR=apps ./build.sh run
