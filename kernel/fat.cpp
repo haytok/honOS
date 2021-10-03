@@ -1,5 +1,6 @@
 #include "fat.hpp"
 
+#include <algorithm>
 #include <cstring>
 #include <cctype>
 #include <utility>
@@ -157,6 +158,43 @@ size_t LoadFile(void* buf, size_t len, const DirectoryEntry& entry) {
     cluster = NextCluster(cluster);
   }
   return p - buf_uint8;
+}
+
+FileDescriptor::FileDescriptor(DirectoryEntry& fat_entry)
+    : fat_entry_{fat_entry} {}
+
+// newlib_support.c の read 関数から呼び出されている。
+// read 関数でちまちま呼び出す際に、len で指定した長さの文字列読み出す。
+// そして、その際にそのエントリのどこまで読み出したかの情報を保持する必要がある。
+size_t FileDescriptor::Read(void* buf, size_t len) {
+  // rd_off_ : ファイル先頭からの論理的な読み込みオフセット (バイト単位)
+  // rd_cluster_ : rd_off_ が指す位置に対応するクラスタ番号
+  // rd_cluster_off_ : rd_off_ が指すクラスタ番号のクラスタの先頭からのオフセット (バイト単位)
+  if (rd_cluster_ == 0) {
+    rd_cluster_ = fat_entry_.FirstCluster();
+  }
+  uint8_t* buf8 = reinterpret_cast<uint8_t*>(buf);
+  len = std::min(len, fat_entry_.file_size - rd_off_); // この長さの文字列を読み出す。
+
+  size_t total = 0; // 今までに書き込んだバイト数
+  while (total < len) { // 以下は cat コマンドの実装が参考になる。
+    uint8_t* sec = GetSectorByCluster<uint8_t>(rd_cluster_);
+    size_t n = std::min(len - total, bytes_per_cluster - rd_cluster_off_); // buf に書き込むためのこのセクタの文字列の長さを調べる。
+    memcpy(&buf8[total], &sec[rd_cluster_off_], n);
+    total += n;
+
+    // クラスタチェーンに従って次のクラスタを参照できるようにする。
+    rd_cluster_off_ += n;
+    // 読み出しているセクタの末尾まで行くと以下の if に処理が移る。
+    // そうでない時は、再び while 文の中に処理にが戻る。
+    if (rd_cluster_off_ == bytes_per_cluster) {
+      rd_cluster_ = NextCluster(rd_cluster_);
+      rd_cluster_off_ = 0;
+    }
+  }
+
+  rd_off_ += total;
+  return total;
 }
 
 }

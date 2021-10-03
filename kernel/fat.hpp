@@ -94,4 +94,16 @@ bool NameIsEqual(const DirectoryEntry& entry, const char* name);
 // entry のファイルの内容を buf にコピーし、読み込んだバイト数を返す
 size_t LoadFile(void* buf, size_t len, const DirectoryEntry& entry);
 
-}
+class FileDescriptor {
+ public:
+  explicit FileDescriptor(DirectoryEntry& fat_entry);
+  size_t Read(void* buf, size_t len); // ReadFile() システムコールで呼び出す。
+
+ private:
+  DirectoryEntry& fat_entry_; // このファイルディスクリプタが指すファイルへの参照
+  size_t rd_off_ = 0; // ファイル先頭からの論理的な読み込みオフセット (バイト単位)
+  unsigned long rd_cluster_ = 0; // rd_off_ が指す位置に対応するクラスタ番号
+  size_t rd_cluster_off_ = 0; // rd_off_ が指すクラスタ番号のクラスタの先頭からのオフセット (バイト単位)
+};
+
+} // namespace fat
