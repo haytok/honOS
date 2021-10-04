@@ -344,6 +344,10 @@ SYSCALL(OpenFile) {
   auto& task = task_manager->CurrentTask();
   __asm__("sti");
 
+  if (strcmp(path, "@stdin") == 0) {
+    return { 0, 0 }; // エラーが生じず fd が 0 になるので、呼び出し元の箇所の後で ReadFile システムコールが呼び出されると、標準入力を読み出す。
+  }
+
   if ((flags & O_ACCMODE) == O_WRONLY) { // 書き込み専用のモードの時
     return { 0, EINVAL };
   }

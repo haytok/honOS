@@ -548,6 +548,9 @@ Error Terminal::ExecuteFile(const fat::DirectoryEntry& file_entry, char* command
     return err;
   }
 
+  task.Files().push_back(
+    std::make_unique<TerminalFileDescriptor>(task, *this));
+
   auto entry_addr = elf_header->e_entry;
   int ret = CallApp(argc.value, argv, 3 << 3 | 3, entry_addr,
                     stack_frame_addr.value + 4096 - 8,
@@ -556,6 +559,8 @@ Error Terminal::ExecuteFile(const fat::DirectoryEntry& file_entry, char* command
   char s[64];
   sprintf(s, "app exited. ret = %d\n", ret);
   Print(s);
+
+  task.Files().clear();
 
   const auto addr_first = GetFirstLoadAddress(elf_header);
   if (auto err = CleanPageMaps(LinearAddress4Level{addr_first})) {
@@ -723,6 +728,31 @@ void TaskTerminal(uint64_t task_id, int64_t data) {
       break;
     default:
       break;
+    }
+  }
+}
+
+TerminalFileDescriptor::TerminalFileDescriptor(Task& task, Terminal& term)
+    : task_{task}, term_{term} {
+}
+
+size_t TerminalFileDescriptor::Read(void* buf, size_t len) {
+  // ターミナルからの標準入力を標準出力にエコーバックするだけなので、第二引数の len は必要ない。
+  char* bufc = reinterpret_cast<char*>(buf);
+
+  while (true) {
+    __asm__("cli");
+    auto msg = task_.ReceiveMessage();
+    if (!msg) {
+      task_.Sleep();
+      continue;
+    }
+    __asm__("sti");
+
+    if (msg->type == Message::kKeyPush && msg->arg.keyboard.press) {
+      bufc[0] = msg->arg.keyboard.ascii;
+      term_.Print(bufc, 1);
+      return 1; // 読み出した文字の長さを返す。
     }
   }
 }

@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <cstddef>
 
+#include "file.hpp"
+
 namespace fat {
 
 struct BPB {
@@ -94,10 +96,10 @@ bool NameIsEqual(const DirectoryEntry& entry, const char* name);
 // entry のファイルの内容を buf にコピーし、読み込んだバイト数を返す
 size_t LoadFile(void* buf, size_t len, const DirectoryEntry& entry);
 
-class FileDescriptor {
+class FileDescriptor : public ::FileDescriptor {
  public:
   explicit FileDescriptor(DirectoryEntry& fat_entry);
-  size_t Read(void* buf, size_t len); // ReadFile() システムコールで呼び出す。
+  size_t Read(void* buf, size_t len) override; // ReadFile() システムコールで呼び出す。
 
  private:
   DirectoryEntry& fat_entry_; // このファイルディスクリプタが指すファイルへの参照
