@@ -8,6 +8,14 @@
 
 ![osbook_day25c.gif](https://github.com/dilmnqvovpnmlib/hakiwata/blob/main/content/post/20210830/media/osbook_day25c.gif)
 
+# その他
+
+- 特定のタグに移動する。
+
+```bash
+git checkout refs/tags/osbook_day26a
+```
+
 ## 参考
 
 - [uchan-nos/mikanos](https://github.com/uchan-nos/mikanos)
