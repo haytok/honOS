@@ -516,3 +516,11 @@ hello
 # osbook_day20b
 
 - `SetupSegments` は、`GDT` を再構築するための関数である。
+
+# osbook_day26a
+
+- 特定のタグに移動する。
+
+```bash
+git checkout refs/tags/osbook_day26a
+```
