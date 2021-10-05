@@ -45,13 +45,13 @@ class Terminal {
   bool show_window_;
 };
 
-extern std::map<uint64_t, Terminal*>* terminals;
 void TaskTerminal(uint64_t task_id, int64_t data);
 
 class TerminalFileDescriptor : public FileDescriptor {
  public:
   explicit TerminalFileDescriptor(Task& task, Terminal& term); // fat の FileDescriptor と違ってても問題ない。
   size_t Read(void* buf, size_t len) override; // ReadFile() システムコールで呼び出す。
+  size_t Write(const void* buf, size_t len) override; // WriteFile() システムコールで呼び出す。
 
  private:
   Task& task_;

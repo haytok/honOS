@@ -104,16 +104,23 @@ DirectoryEntry* AllocateEntry(unsigned long dir_cluster);
 void SetFileName(DirectoryEntry& entry, const char* name);
 WithError<DirectoryEntry*> CreateFile(const char* path);
 
+unsigned long AllocateClusterChain(size_t n);
+
 class FileDescriptor : public ::FileDescriptor {
  public:
   explicit FileDescriptor(DirectoryEntry& fat_entry);
   size_t Read(void* buf, size_t len) override; // ReadFile() システムコールで呼び出す。
+  size_t Write(const void* buf, size_t len) override;
 
  private:
   DirectoryEntry& fat_entry_; // このファイルディスクリプタが指すファイルへの参照
   size_t rd_off_ = 0; // ファイル先頭からの論理的な読み込みオフセット (バイト単位)
   unsigned long rd_cluster_ = 0; // rd_off_ が指す位置に対応するクラスタ番号
   size_t rd_cluster_off_ = 0; // rd_off_ が指すクラスタ番号のクラスタの先頭からのオフセット (バイト単位)
+  // 書き込みの際に必要な変数を定義する。
+  size_t wr_off_ = 0; // ファイル先頭からのオフセット
+  unsigned long wr_cluster_ = 0; // 書き込み対象のクラスタ番号
+  size_t wr_cluster_off_ = 0; // 書き込み対象のクラスタ内でのオフセット
 };
 
 } // namespace fat

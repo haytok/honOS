@@ -169,7 +169,6 @@ extern "C" void KernelMainNewStack(
 
   InitializeTask(); // 内部で task_manager を初期化している。
   Task& main_task = task_manager->CurrentTask();
-  terminals = new std::map<uint64_t, Terminal*>;
 
   // task_manager が初期化された後に呼び出す
   usb::xhci::Initialize();

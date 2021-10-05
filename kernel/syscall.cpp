@@ -48,12 +48,14 @@ SYSCALL(PutString) {
     return { 0, E2BIG };
   }
 
-  if (fd == 1) {
-    const auto task_id = task_manager->CurrentTask().ID(); // このシステムコールを実行しているタスクの ID がわかると、どのターミナルから実行されているかがわかる。
-    (*terminals)[task_id]->Print(s, len);
-    return { len, 0 };
+  __asm__("cli");
+  auto& task = task_manager->CurrentTask();
+  __asm__("sti");
+
+  if (fd < 0 || task.Files().size() <= fd || !task.Files()[fd]) {
+    return { 0, EBADF };
   }
-  return { 0, EBADF };
+  return { task.Files()[fd]->Write(s, len), 0 }; // この Write 関数の中で fd に対応した Write が呼び出される。そして、その fd の出力先に基づいた処理が行われる。
 }
 
 SYSCALL(Exit) {

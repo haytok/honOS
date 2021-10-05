@@ -549,8 +549,10 @@ Error Terminal::ExecuteFile(const fat::DirectoryEntry& file_entry, char* command
     return err;
   }
 
-  task.Files().push_back(
-    std::make_unique<TerminalFileDescriptor>(task, *this));
+  for (int i = 0; i < 3; ++i) {
+    task.Files().push_back(
+      std::make_unique<TerminalFileDescriptor>(task, *this));
+  }
 
   auto entry_addr = elf_header->e_entry;
   int ret = CallApp(argc.value, argv, 3 << 3 | 3, entry_addr,
@@ -652,8 +654,6 @@ Rectangle<int> Terminal::HistoryUpDown(int direction) {
   return draw_area;
 }
 
-std::map<uint64_t, Terminal*>* terminals;
-
 void TaskTerminal(uint64_t task_id, int64_t data) {
   // data に値が入っている際は、noterm 以降の文字列が入っている。
   const char* command_line = reinterpret_cast<char*>(data);
@@ -668,7 +668,6 @@ void TaskTerminal(uint64_t task_id, int64_t data) {
     // この位置で呼び出したのは、active_layer->Activate の中で SendWindowActiveMessage を呼び出し、その中で layer_task_map を使って active な layer_id に対応する task_id を求める必要があるからである。
     active_layer->Activate(terminal->LayerID());
   }
-  (*terminals)[task_id] = terminal;
   __asm__("sti");
 
   if (command_line) {
@@ -767,4 +766,9 @@ size_t TerminalFileDescriptor::Read(void* buf, size_t len) {
     term_.Print(bufc, 1);
     return 1; // 読み出した文字の長さを返す。
   }
+}
+
+size_t TerminalFileDescriptor::Write(const void* buf, size_t len) {
+  term_.Print(reinterpret_cast<const char*>(buf), len);
+  return len;
 }
