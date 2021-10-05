@@ -6,7 +6,7 @@ import requests
 
 USER_NAME = 'dilmnqvovpnmlib'
 REPOSITORY_NAME = 'hakiwata'
-API_URL = 'https://api.github.com/repos/{}/{}/contents/content/post/20210830/media'.format(
+API_URL = 'https://api.github.com/repos/{}/{}/contents/content/post/20210901/media'.format(
     USER_NAME,
     REPOSITORY_NAME,
 )
