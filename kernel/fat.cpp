@@ -176,7 +176,7 @@ unsigned long ExtendCluster(unsigned long eoc_cluster, size_t n) {
 
   size_t num_allocated = 0;
   auto current = eoc_cluster;
-  for (unsigned long candidate = 2; num_allocated < candidate; ++candidate) {
+  for (unsigned long candidate = 2; num_allocated < n; ++candidate) {
     if (fat[candidate] != 0) {
       continue;
     }
