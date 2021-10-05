@@ -4,17 +4,9 @@
 
 # 画面
 
-## osbook_day25c
+## osbook_day26d
 
-![osbook_day25c.gif](https://github.com/dilmnqvovpnmlib/hakiwata/blob/main/content/post/20210830/media/osbook_day25c.gif)
-
-# その他
-
-- 特定のタグに移動する。
-
-```bash
-git checkout refs/tags/osbook_day26a
-```
+![osbook_day26d.gif](https://github.com/dilmnqvovpnmlib/hakiwata/blob/main/content/post/20210901/media/osbook_day26d.gif)
 
 ## 参考
 
