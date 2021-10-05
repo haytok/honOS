@@ -9,6 +9,7 @@
 #include "paging.hpp"
 #include "logger.hpp"
 #include "timer.hpp"
+#include "keyboard.hpp"
 
 #include <cstring>
 #include <limits>
@@ -749,10 +750,21 @@ size_t TerminalFileDescriptor::Read(void* buf, size_t len) {
     }
     __asm__("sti");
 
-    if (msg->type == Message::kKeyPush && msg->arg.keyboard.press) {
-      bufc[0] = msg->arg.keyboard.ascii;
-      term_.Print(bufc, 1);
-      return 1; // 読み出した文字の長さを返す。
+    if (msg->type != Message::kKeyPush || !msg->arg.keyboard.press) {
+      continue;
     }
+    if (msg->arg.keyboard.modifier & (kLControlBitMask | kRControlBitMask)) {
+      char s[3] = "^ ";
+      s[1] = toupper(msg->arg.keyboard.ascii);
+      term_.Print(s);
+      if (msg->arg.keyboard.keycode == 7) { // D
+        return 0; // EOT
+      }
+      continue;
+    }
+
+    bufc[0] = msg->arg.keyboard.ascii;
+    term_.Print(bufc, 1);
+    return 1; // 読み出した文字の長さを返す。
   }
 }
