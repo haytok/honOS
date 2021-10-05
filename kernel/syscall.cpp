@@ -332,6 +332,16 @@ namespace {
     task.Files().emplace_back();
     return num_files;
   }
+
+  std::pair<fat::DirectoryEntry*, int> CreateFile(const char* path) {
+    auto [ file, err ] = fat::CreateFile(path);
+    switch (err.Cause()) {
+    case Error::kIsDirectory: return { file, EISDIR };
+    case Error::kNoSuchEntry: return { file, ENOENT };
+    case Error::kNoEnoughMemory: return { file, ENOSPC };
+    default: return { file, 0 };
+    }
+  }
 } // namespace
 
 // newlib_support.c 内で呼び出される。
@@ -348,19 +358,22 @@ SYSCALL(OpenFile) {
     return { 0, 0 }; // エラーが生じず fd が 0 になるので、呼び出し元の箇所の後で ReadFile システムコールが呼び出されると、標準入力を読み出す。
   }
 
-  if ((flags & O_ACCMODE) == O_WRONLY) { // 書き込み専用のモードの時
-    return { 0, EINVAL };
-  }
-
-  auto [ dir, post_slash ] = fat::FindFile(path);
-  if (dir == nullptr) {
-    return { 0, ENOENT };
-  } else if (dir->attr != fat::Attribute::kDirectory && post_slash) { // ディレクトリ出ないにも関わらず末尾に / があるケース
+  auto [ file, post_slash ] = fat::FindFile(path);
+  if (file == nullptr) {
+    if ((flags & O_CREAT) == 0) {
+      return { 0, ENOENT };
+    }
+    auto [ new_file, err ] = CreateFile(path);
+    if (err) {
+      return { 0, err };
+    }
+    file = new_file;
+  } else if (file->attr != fat::Attribute::kDirectory && post_slash) { // ディレクトリ出ないにも関わらず末尾に / があるケース
     return { 0, ENOENT };
   }
 
   size_t fd = AllocateFD(task);
-  task.Files()[fd] = std::make_unique<fat::FileDescriptor>(*dir); // ファイルディスクリプタのテーブルには、ディレクトリエントリの実体を格納する。
+  task.Files()[fd] = std::make_unique<fat::FileDescriptor>(*file); // ファイルディスクリプタのテーブルには、ディレクトリエントリの実体を格納する。
   return { fd, 0 };
 }
 
