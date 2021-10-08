@@ -3,6 +3,8 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "error.hpp"
+
 const size_t kPageDirectoryCount = 64;
 
 void SetupIdentityPageTable();
@@ -70,7 +72,15 @@ union PageMapEntry {
     return reinterpret_cast<PageMapEntry*>(bits.addr << 12);
   }
 
+  // p の 12 ~ 51 ビットに 1 使いの階層を指す物理アドレスが格納されている。
+  // そのアドレスを bits.addr に格納する。
   void SetPointer(PageMapEntry* p) {
     bits.addr = reinterpret_cast<uint64_t>(p) >> 12;
   }
 };
+
+WithError<PageMapEntry*> NewPageMap();
+Error FreePageMap(PageMapEntry* table);
+Error SetupPageMaps(LinearAddress4Level addr, size_t num_4kpages);
+Error CleanPageMaps(LinearAddress4Level addr);
+Error HandlePageFault(uint64_t error_code, uint64_t casual_addr);

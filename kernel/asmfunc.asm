@@ -78,6 +78,12 @@ SetDSAll:
     mov gs, di
     ret
 
+; uint64_t GetCR2()
+global GetCR2
+GetCR2:
+    mov rax, cr2
+    ret
+
 ; void SetCR3(uint64_t value)
 ; CR3 を書き換えると、CPU は新しい階層ページング構造を使ってアドレス変換を行う
 global SetCR3
