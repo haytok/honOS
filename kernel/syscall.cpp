@@ -408,6 +408,27 @@ SYSCALL(DemandPages) { // デマンドページングが可能なアドレス範
   return { dp_end, 0 };
 }
 
+// struct SyscallResult SyscallMapFile(int fd, size_t* file_size, int flags);
+SYSCALL(MapFile) {
+  const int fd = arg1;
+  size_t* file_size = reinterpret_cast<size_t*>(arg2);
+  // const int flags = arg3;
+  __asm__("cli");
+  auto& task = task_manager->CurrentTask();
+  __asm__("sti");
+
+  if (fd < 0 || task.Files().size() <= fd || !task.Files()[fd]) {
+    return { 0, EBADF };
+  }
+
+  *file_size = task.Files()[fd]->Size(); // この Size 関数は day27b で追加で実装される。
+  const uint64_t vaddr_end = task.FileMapEnd();
+  const uint64_t vaddr_begin = (vaddr_end - *file_size) & 0xffff'ffff'ffff'f000;
+  task.SetFileMapEnd(vaddr_begin);
+  task.FileMaps().push_back(FileMapping{fd, vaddr_begin, vaddr_end});
+  return { vaddr_begin, 0 };
+}
+
 #undef SYSCALL
 
 } // namespace syscall
@@ -415,7 +436,7 @@ SYSCALL(DemandPages) { // デマンドページングが可能なアドレス範
 using SyscallFuncType = syscall::Result (uint64_t, uint64_t, uint64_t,
                                  uint64_t, uint64_t, uint64_t);
 
-extern "C" std::array<SyscallFuncType*, 0xf> syscall_table{
+extern "C" std::array<SyscallFuncType*, 0x10> syscall_table{
   /* 0x00 */ syscall::LogString,
   /* 0x01 */ syscall::PutString,
   /* 0x02 */ syscall::Exit,
@@ -431,6 +452,7 @@ extern "C" std::array<SyscallFuncType*, 0xf> syscall_table{
   /* 0x0c */ syscall::OpenFile,
   /* 0x0d */ syscall::ReadFile,
   /* 0x0e */ syscall::DemandPages,
+  /* 0x0f */ syscall::MapFile,
 };
 
 void InitializeSyscall() {

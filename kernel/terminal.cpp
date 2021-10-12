@@ -396,7 +396,7 @@ void Terminal::ExecuteLine() {
 }
 
 // cat コマンドでファイルを読み出すのと処理が似ている。
-Error Terminal::ExecuteFile(const fat::DirectoryEntry& file_entry, char* command, char* first_arg) {
+Error Terminal::ExecuteFile(fat::DirectoryEntry& file_entry, char* command, char* first_arg) {
   std::vector<uint8_t> file_buf(file_entry.file_size);
   fat::LoadFile(&file_buf[0], file_buf.size(), file_entry);
 
@@ -451,6 +451,8 @@ Error Terminal::ExecuteFile(const fat::DirectoryEntry& file_entry, char* command
   task.SetDPagingBegin(elf_next_page);
   task.SetDPagingEnd(elf_next_page);
 
+  task.SetFileMapEnd(0xffff'ffff'ffff'e000);
+
   auto entry_addr = elf_header->e_entry;
   int ret = CallApp(argc.value, argv, 3 << 3 | 3, entry_addr,
                     stack_frame_addr.value + 4096 - 8,
@@ -461,6 +463,7 @@ Error Terminal::ExecuteFile(const fat::DirectoryEntry& file_entry, char* command
   Print(s);
 
   task.Files().clear();
+  task.FileMaps().clear();
 
   const auto addr_first = GetFirstLoadAddress(elf_header);
   if (auto err = CleanPageMaps(LinearAddress4Level{addr_first})) {
@@ -668,4 +671,8 @@ size_t TerminalFileDescriptor::Read(void* buf, size_t len) {
 size_t TerminalFileDescriptor::Write(const void* buf, size_t len) {
   term_.Print(reinterpret_cast<const char*>(buf), len);
   return len;
+}
+
+size_t TerminalFileDescriptor::Load(void* buf, size_t len, size_t offset) {
+  return 0;
 }

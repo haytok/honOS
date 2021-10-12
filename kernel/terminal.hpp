@@ -35,7 +35,7 @@ class Terminal {
   void Scroll1();
 
   void ExecuteLine();
-  Error ExecuteFile(const fat::DirectoryEntry& file_entry, char* command, char* first_arg);
+  Error ExecuteFile(fat::DirectoryEntry& file_entry, char* command, char* first_arg);
   void Print(char c);
 
   std::deque<std::array<char, kLineMax>> cmd_history_{};
@@ -52,6 +52,8 @@ class TerminalFileDescriptor : public FileDescriptor {
   explicit TerminalFileDescriptor(Task& task, Terminal& term); // fat の FileDescriptor と違ってても問題ない。
   size_t Read(void* buf, size_t len) override; // ReadFile() システムコールで呼び出す。
   size_t Write(const void* buf, size_t len) override; // WriteFile() システムコールで呼び出す。
+  size_t Size() const override { return 0; }
+  size_t Load(void* buf, size_t len, size_t offset) override;
 
  private:
   Task& task_;
