@@ -4,4 +4,4 @@ build:
 
 .PHONY: run
 run:
-	APPS_DIR=apps ./build.sh run
+	APPS_DIR=apps RESOURCE_DIR=resource ./build.sh run
