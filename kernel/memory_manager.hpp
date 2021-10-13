@@ -34,6 +34,11 @@ class FrameID {
 
 static const FrameID kNullFrame{std::numeric_limits<size_t>::max()};
 
+struct MemoryStat {
+  size_t allocated_frames;
+  size_t total_frames;
+};
+
 class BitmapMemoryManager {
  public:
   static const auto kMaxPhysicalMemoryBytes{128_GiB};
@@ -50,6 +55,7 @@ class BitmapMemoryManager {
 
   // このメモリマネージャで扱うメモリ範囲を設定する
   void SetMemoryRange(FrameID range_begin, FrameID range_end);
+  MemoryStat Stat() const;
 
  private:
   std::array<MapLineType, kFrameCount / kBitsPerMapLine> alloc_map_;
