@@ -78,6 +78,16 @@ SetDSAll:
     mov gs, di
     ret
 
+global GetCR0
+GetCR0:
+    mov rax, cr0
+    ret
+
+global SetCR0
+SetCR0:
+    mov cr0, rdi
+    ret
+
 ; uint64_t GetCR2()
 global GetCR2
 GetCR2:
@@ -367,3 +377,8 @@ ExitApp:
     pop rbx
 
     ret ; ret が呼ばれると、call された時に積まれる戻りアドレスの位置に処理が移る。
+
+global InvalidateTLB
+InvalidateTLB:
+    invlpg [rdi]
+    ret
