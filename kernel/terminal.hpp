@@ -43,7 +43,7 @@ class Terminal {
 
   void ExecuteLine();
   Error ExecuteFile(fat::DirectoryEntry& file_entry, char* command, char* first_arg);
-  void Print(char c);
+  void Print(char32_t c);
 
   std::deque<std::array<char, kLineMax>> cmd_history_{};
   int cmd_history_index_{-1}; // -1 は履歴を遡っていない状態を表す。
