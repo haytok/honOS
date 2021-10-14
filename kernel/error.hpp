@@ -34,6 +34,7 @@ class Error {
     kInvalidFile,
     kIsDirectory,
     kNoSuchEntry,
+    kFreeTypeError,
     kLastOfCode,
   };
 
@@ -67,6 +68,7 @@ class Error {
     "kInvalidFile",
     "kIsDirectory",
     "kNoSuchEntry",
+    "kFreeTypeError",
   };
   static_assert(Error::Code::kLastOfCode == code_names_.size());
 

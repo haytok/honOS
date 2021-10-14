@@ -480,8 +480,10 @@ Error Terminal::ExecuteFile(fat::DirectoryEntry& file_entry, char* command, char
   }
 
   // アプリケーションの専用のスタック領域を確保する
-  LinearAddress4Level stack_frame_addr{0xffff'ffff'ffff'e000};
-  if (auto err = SetupPageMaps(stack_frame_addr, 1)) {
+  // UTF8 に対応するためにアプリケーション用のスタック領域を拡張する
+  const int stack_size = 8 * 4096;
+  LinearAddress4Level stack_frame_addr{0xffff'ffff'ffff'f000 - stack_size};
+  if (auto err = SetupPageMaps(stack_frame_addr, stack_size / 4096)) {
     return err;
   }
 
@@ -496,10 +498,10 @@ Error Terminal::ExecuteFile(fat::DirectoryEntry& file_entry, char* command, char
   task.SetDPagingBegin(elf_next_page);
   task.SetDPagingEnd(elf_next_page);
 
-  task.SetFileMapEnd(0xffff'ffff'ffff'e000);
+  task.SetFileMapEnd(stack_frame_addr.value);
 
   int ret = CallApp(argc.value, argv, 3 << 3 | 3, app_load.entry,
-                    stack_frame_addr.value + 4096 - 8,
+                    stack_frame_addr.value + stack_size - 8,
                     &task.OSStackPointer());
 
   char s[64];
