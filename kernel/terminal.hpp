@@ -1,7 +1,9 @@
 #pragma once
 
+#include <array>
 #include <deque>
 #include <map>
+#include <memory>
 #include <optional>
 #include "window.hpp"
 #include "task.hpp"
@@ -20,17 +22,19 @@ class Terminal {
   static const int kRows = 15, kColumns = 60;
   static const int kLineMax = 128;
 
-  Terminal(uint64_t task_id, bool show_window);
+  Terminal(Task& task, bool show_window);
   unsigned int LayerID() const { return layer_id_; }
   Rectangle<int> BlinkCursor();
   Rectangle<int> InputKey(uint8_t modifier, uint8_t keycode, char ascii);
 
   void Print(const char* s, std::optional<size_t> len = std::nullopt);
 
+  Task& UnderlyingTask() const { return task_; }
+
  private:
   std::shared_ptr<ToplevelWindow> window_;
   unsigned int layer_id_;
-  uint64_t task_id_;
+  Task& task_;
 
   Vector2D<int> cursor_{0, 0};
   bool cursor_visible_{false};
@@ -42,7 +46,8 @@ class Terminal {
   void Scroll1();
 
   void ExecuteLine();
-  Error ExecuteFile(fat::DirectoryEntry& file_entry, char* command, char* first_arg);
+  Error ExecuteFile(fat::DirectoryEntry& file_entry,
+                    char* command, char* first_arg);
   void Print(char32_t c);
 
   std::deque<std::array<char, kLineMax>> cmd_history_{};
@@ -50,19 +55,19 @@ class Terminal {
   Rectangle<int> HistoryUpDown(int direction);
 
   bool show_window_;
+  std::array<std::shared_ptr<FileDescriptor>, 3> files_;
 };
 
 void TaskTerminal(uint64_t task_id, int64_t data);
 
 class TerminalFileDescriptor : public FileDescriptor {
  public:
-  explicit TerminalFileDescriptor(Task& task, Terminal& term); // fat の FileDescriptor と違ってても問題ない。
+  explicit TerminalFileDescriptor(Terminal& term); // fat の FileDescriptor と違ってても問題ない。
   size_t Read(void* buf, size_t len) override; // ReadFile() システムコールで呼び出す。
   size_t Write(const void* buf, size_t len) override; // WriteFile() システムコールで呼び出す。
   size_t Size() const override { return 0; }
   size_t Load(void* buf, size_t len, size_t offset) override;
 
  private:
-  Task& task_;
   Terminal& term_;
 };
