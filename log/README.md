@@ -531,3 +531,11 @@ git checkout refs/tags/osbook_day26a
 - 実装の方針
   - PF が生じた時に呼び出されるハンドラを実装する。
   - sbrk 関数から呼び出すシステムコール `DemandPages` を実装する。
+
+# osbook_day28b
+
+- edk2 のディレクトリで build を実行する際に打つコマンド
+
+```bash
+build
+```
