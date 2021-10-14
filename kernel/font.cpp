@@ -126,6 +126,7 @@ WithError<FT_Face> NewFTFace() {
   return { face, MAKE_ERROR(Error::kSuccess) };
 }
 
+// この関数内で日本語対応をしている。
 Error WriteUnicode(PixelWriter& writer, Vector2D<int> pos,
                   char32_t c, const PixelColor& color) {
   if (c <= 0x7f) {
