@@ -213,6 +213,44 @@ Task& TaskManager::CurrentTask() {
   return *running_[current_level_].front();
 }
 
+// TaskB から呼び出される。
+void TaskManager::Finish(int exit_code) {
+  Task* current_task = RotateCurrentRunQueue(true);
+
+  const auto task_id = current_task->ID();
+  auto it = std::find_if(
+      tasks_.begin(), tasks_.end(),
+      [current_task](const auto& t){ return t.get() == current_task; });
+  tasks_.erase(it);
+
+  finish_tasks_[task_id] = exit_code;
+  if (auto it = finish_waiter_.find(task_id); it != finish_waiter_.end()) {
+    auto waiter = it->second;
+    finish_waiter_.erase(it);
+    Wakeup(waiter);
+  }
+
+  RestoreContext(&CurrentTask().Context());
+}
+
+// TaskA から呼び出される。TaskB が完了するまで Sleep して待機する。
+// 上述の TaskManager::Finish で更新する finish_tasks_ をもとに次の処理を判断する。
+// task_id は TaskB のことを指し、current_task は TaskA を指す。
+WithError<int> TaskManager::WaitFinish(uint64_t task_id) {
+  int exit_code;
+  Task* current_task = &CurrentTask();
+  while (true) {
+    if (auto it = finish_tasks_.find(task_id); it != finish_tasks_.end()) {
+      exit_code = it->second;
+      finish_tasks_.erase(it);
+      break;
+    }
+    finish_waiter_[task_id] = current_task;
+    Sleep(current_task);
+  }
+  return { exit_code, MAKE_ERROR(Error::kSuccess) };
+}
+
 // level_changed のフラグを立てるだけで、実際に current_level_ を変更するのは SwichContext 内で行う。
 // ただし、タスクのランキュー間の移動は行う。
 void TaskManager::ChangeLevelRunning(Task* task, int level) {

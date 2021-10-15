@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <deque>
+#include <map>
 #include <optional>
 #include <vector>
 
@@ -90,6 +91,10 @@ class TaskManager {
   Error Wakeup(uint64_t id, int level = -1);
   Error SendMessage(uint64_t id, const Message& msg);
   Task& CurrentTask();
+  // TaskB が呼び出し、処理の結果を finish_tasks_ に保存し、そのタスク自体を終了させる。
+  void Finish(int exit_code);
+  // TaskA が呼び出し、TaskB が完了するまで待つ。
+  WithError<int> WaitFinish(uint64_t task_id);
 
  private:
   std::vector<std::unique_ptr<Task>> tasks_{};
@@ -97,6 +102,12 @@ class TaskManager {
   std::array<std::deque<Task*>, kMaxLevel + 1> running_{}; // 実行可能状態あるいは実行状態の Task が並んでいるキュー
   int current_level_{kMaxLevel};
   bool level_changed_{false};
+  // パイプの右側のタスクの ID とその結果のペア
+  // TaskB, 42
+  std::map<uint64_t, int> finish_tasks_{};
+  // パイプの右側のタスクの ID とパイプの右側の処理を待つタスクの ID のペア。
+  // TaskB, TaskA
+  std::map<uint64_t, Task*> finish_waiter_{};
 
   void ChangeLevelRunning(Task* task, int level);
   Task* RotateCurrentRunQueue(bool current_sleep);

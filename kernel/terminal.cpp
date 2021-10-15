@@ -10,6 +10,7 @@
 #include "logger.hpp"
 #include "timer.hpp"
 #include "keyboard.hpp"
+#include "logger.hpp"
 
 #include <cstring>
 #include <limits>
@@ -228,12 +229,21 @@ WithError<AppLoadInfo> LoadApp(fat::DirectoryEntry& file_entry, Task& task) {
 
 std::map<fat::DirectoryEntry*, AppLoadInfo>* app_loads;
 
-Terminal::Terminal(Task& task, bool show_window)
-    : task_{task}, show_window_{show_window} {
-  for (int i = 0; i < files_.size(); ++i) {
-    files_[i] = std::make_shared<TerminalFileDescriptor>(*this);
+Terminal::Terminal(Task& task, const TerminalDescriptor* term_desc)
+    : task_{task} {
+  if (term_desc) {
+    show_window_ = term_desc->show_window;
+    for (int i = 0; i < files_.size(); ++i) {
+      files_[i] = term_desc->files[i];
+    }
+  } else {
+    show_window_ = true;
+    for (int i = 0; i < files_.size(); ++i) {
+      files_[i] = std::make_shared<TerminalFileDescriptor>(*this);
+    }
   }
-  if (show_window) {
+
+  if (show_window_) {
     window_ = std::make_shared<ToplevelWindow>(
         kColumns * 8 + 8 + ToplevelWindow::kMarginX,
         kRows * 16 + 8 + ToplevelWindow::kMarginY,
@@ -340,6 +350,7 @@ void Terminal::ExecuteLine() {
   char* command = &linebuf_[0];
   char* first_arg = strchr(&linebuf_[0], ' '); // 一番初め見つかる空白文字へのポインタを返す。
   char* redir_char = strchr(&linebuf_[0], '>');
+  char* pipe_char = strchr(&linebuf_[0], '|');
   if (first_arg) {
     *first_arg = 0; // 一番初めに見つかった空白文字に塗る文字を入れて、文字列の終端を表す。
     ++first_arg; // command の空白スペースが空いた次の引数が入る。
@@ -372,6 +383,32 @@ void Terminal::ExecuteLine() {
     files_[1] = std::make_shared<fat::FileDescriptor>(*file);
   }
 
+  // パイプの記号がある時の処理
+  std::shared_ptr<PipeDescriptor> pipe_fd;
+  uint64_t subtask_id = 0;
+  if (pipe_char) {
+    *pipe_char = 0;
+    char* subcommand = &pipe_char[1];
+    while (isspace(*subcommand)) {
+      ++subcommand;
+    }
+
+    auto& subtask = task_manager->NewTask(); // task のオブジェクトは作成したが、初期化は行っていない。初期化は後に行う。
+    pipe_fd = std::make_shared<PipeDescriptor>(subtask);
+    auto term_desc = new TerminalDescriptor{
+      subcommand, true, false,
+      { pipe_fd, files_[1], files_[2] }
+    };
+    files_[1] = pipe_fd;
+
+    // task オブジェクトを初期化する。
+    subtask_id = subtask
+      .InitContext(TaskTerminal, reinterpret_cast<int64_t>(term_desc))
+      .Wakeup()
+      .ID();
+  }
+
+  // パイプがあるとき、パイプの右側のタスクの fd に紐づく Read/Write のメソッドを呼び出す。
   if (strcmp(command, "echo") == 0) {
     // $? に格納されている変数を表示させる。
     if (first_arg && first_arg[0] == '$') {
@@ -450,8 +487,11 @@ void Terminal::ExecuteLine() {
       DrawCursor(true);
     }
   } else if (strcmp(command, "noterm") == 0) {
+    auto term_desc = new TerminalDescriptor{
+      first_arg, true, false, files_
+    };
     task_manager->NewTask()
-      .InitContext(TaskTerminal, reinterpret_cast<int64_t>(first_arg))
+      .InitContext(TaskTerminal, reinterpret_cast<int64_t>(term_desc))
       .Wakeup();
   } else if (strcmp(command, "memstat") == 0) {
     const auto p_stat = memory_manager->Stat();
@@ -481,6 +521,21 @@ void Terminal::ExecuteLine() {
         exit_code = ec;
       }
     }
+  }
+
+  // パイプの右側の処理が一通り完了すると、パイプの右側のタスクに終了のメッセージを投げる。
+  // パイプのタスクは右側のタスクが終了するまでメッセージを待ち続けているので、この処理が飛ばないと、処理が完了しない。
+  if (pipe_fd) {
+    pipe_fd->FinishWrite();
+    // パイプの右側の終了コードがこのワンライナーの処理の終了コードになる。
+    // パイプの右側のタスクが完了しているかを左側のタスクは確認する必要がある。
+    __asm__("cli");
+    auto [ ec, err ] = task_manager->WaitFinish(subtask_id);
+    __asm__("sti");
+    if (err) {
+      Log(kWarn, "failed to wait to finish: %s\n", err.Name());
+    }
+    exit_code = ec;
   }
 
   last_exit_code_ = exit_code;
@@ -635,12 +690,15 @@ Rectangle<int> Terminal::HistoryUpDown(int direction) {
 
 void TaskTerminal(uint64_t task_id, int64_t data) {
   // data に値が入っている際は、noterm 以降の文字列が入っている。
-  const char* command_line = reinterpret_cast<char*>(data);
-  const bool show_window = command_line == nullptr;
+  const auto term_desc = reinterpret_cast<TerminalDescriptor*>(data);
+  bool show_window = true;
+  if (term_desc) {
+    show_window = term_desc->show_window;
+  }
 
   __asm__("cli");
   Task& task = task_manager->CurrentTask();
-  Terminal* terminal = new Terminal{task, show_window};
+  Terminal* terminal = new Terminal{task, term_desc};
   if (show_window) {
     layer_manager->Move(terminal->LayerID(), {100, 200});
     layer_task_map->insert(std::make_pair(terminal->LayerID(), task_id));
@@ -649,12 +707,19 @@ void TaskTerminal(uint64_t task_id, int64_t data) {
   }
   __asm__("sti");
 
-  if (command_line) {
-    for (int i = 0; command_line[i] != '\0'; ++i) {
+  if (term_desc && !term_desc->command_line.empty()) {
+    for (int i = 0; i < term_desc->command_line.length(); ++i) {
       // 現時点では大文字のアプリケーションを実行するのは無理そう。
-      terminal->InputKey(0, 0, command_line[i]);
+      terminal->InputKey(0, 0, term_desc->command_line[i]);
     }
     terminal->InputKey(0, 0, '\n');
+  }
+
+  if (term_desc && term_desc->exit_after_command) {
+    delete term_desc;
+    __asm__("cli");
+    task_manager->Finish(terminal->LastExitCode()); // TaskB の処理
+    __asm__("sti");
   }
 
   auto add_blink_timer = [task_id](unsigned long t) {
@@ -754,4 +819,74 @@ size_t TerminalFileDescriptor::Write(const void* buf, size_t len) {
 
 size_t TerminalFileDescriptor::Load(void* buf, size_t len, size_t offset) {
   return 0;
+}
+
+PipeDescriptor::PipeDescriptor(Task& task) : task_{task} {
+}
+
+// buf に受け取った msg の内容を書き出す。
+size_t PipeDescriptor::Read(void* buf, size_t len) {
+  // バッファ data_ に書き込みが残っている時の処理が走る。初回時には呼び出されることはない。
+  // 読み込みのサイズよりも大きいサイズのメッセージが飛んできた時のこの処理が走る。
+  if (len_ > 0) {
+    const size_t copy_bytes = std::min(len_, len);
+    memcpy(buf, data_, copy_bytes);
+    len_ -= copy_bytes;
+    memmove(data_, &data_[copy_bytes], len_);
+    return copy_bytes;
+  }
+
+  if (closed_) {
+    return 0;
+  }
+
+  while (true) {
+    __asm__("cli");
+    auto msg = task_.ReceiveMessage();
+    if (!msg) {
+      task_.Sleep();
+      continue;
+    }
+    __asm__("sti");
+
+    if (msg->type != Message::kPipe) {
+      continue;
+    }
+
+    if (msg->arg.pipe.len == 0) {
+      closed_ = true;
+      return 0;
+    }
+
+    const size_t copy_bytes = std::min<size_t>(msg->arg.pipe.len, len);
+    memcpy(buf, msg->arg.pipe.data, copy_bytes);
+    len_ = msg->arg.pipe.len - copy_bytes; // この変数は、一回で読み出せなかったバイト数である。
+    memcpy(data_, &msg->arg.pipe.data[copy_bytes], len_);
+    return copy_bytes;
+  }
+}
+
+// 処理の一連の流れを理解するには PipeDescriptor::Write から読むと良い！
+// buf として受け取った文字列を msg 内のオブジェクトに突っ込んで投げる。
+size_t PipeDescriptor::Write(const void* buf, size_t len) {
+  auto bufc = reinterpret_cast<const char*>(buf);
+  Message msg{Message::kPipe};
+  size_t sent_bytes = 0;
+  while (sent_bytes < len) {
+    msg.arg.pipe.len = std::min(len - sent_bytes, sizeof(msg.arg.pipe.data));
+    memcpy(msg.arg.pipe.data, &bufc[sent_bytes], msg.arg.pipe.len);
+    sent_bytes += msg.arg.pipe.len;
+    __asm__("cli");
+    task_.SendMessage(msg);
+    __asm__("sti");
+  }
+  return len;
+}
+
+void PipeDescriptor::FinishWrite() {
+  Message msg{Message::kPipe};
+  msg.arg.pipe.len = 0;
+  __asm__("cli");
+  task_.SendMessage(msg);
+  __asm__("sti");
 }
