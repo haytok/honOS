@@ -430,6 +430,9 @@ void Terminal::ExecuteLine() {
       .InitContext(TaskTerminal, reinterpret_cast<int64_t>(term_desc))
       .Wakeup()
       .ID();
+
+    // more コマンドでイベントを受け取る先をパイプの右側のタスクに変更する。
+    (*layer_task_map)[layer_id_] = subtask_id;
   }
 
   // パイプがあるとき、パイプの右側のタスクの fd に紐づく Read/Write のメソッドを呼び出す。
@@ -544,6 +547,7 @@ void Terminal::ExecuteLine() {
     // パイプの右側のタスクが完了しているかを左側のタスクは確認する必要がある。
     __asm__("cli");
     auto [ ec, err ] = task_manager->WaitFinish(subtask_id);
+    (*layer_task_map)[layer_id_] = task_.ID();
     __asm__("sti");
     if (err) {
       Log(kWarn, "failed to wait to finish: %s\n", err.Name());
