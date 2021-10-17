@@ -401,6 +401,7 @@ SYSCALL(DemandPages) { // デマンドページングが可能なアドレス範
   return { dp_end, 0 };
 }
 
+// ファイルを仮想メモリ上にマップするための関数
 // struct SyscallResult SyscallMapFile(int fd, size_t* file_size, int flags);
 SYSCALL(MapFile) {
   const int fd = arg1;
