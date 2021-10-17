@@ -596,7 +596,7 @@ WithError<int> Terminal::ExecuteFile(fat::DirectoryEntry& file_entry,
 
   // アプリケーションの専用のスタック領域を確保する
   // UTF8 に対応するためにアプリケーション用のスタック領域を拡張する
-  const int stack_size = 8 * 4096;
+  const int stack_size = 16 * 4096;
   LinearAddress4Level stack_frame_addr{0xffff'ffff'ffff'f000 - stack_size};
   if (auto err = SetupPageMaps(stack_frame_addr, stack_size / 4096)) {
     return { 0, err };
