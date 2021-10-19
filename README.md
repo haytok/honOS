@@ -4,9 +4,9 @@
 
 # 画面
 
-## osbook_day29b
+## osbook_day30f
 
-![osbook_day29b.gif](https://github.com/dilmnqvovpnmlib/hakiwata/blob/main/content/post/20210901/media/osbook_day29b.gif)
+![osbook_day30f.gif](https://github.com/dilmnqvovpnmlib/hakiwata/blob/main/content/post/20210901/media/osbook_day30f.gif)
 
 ## 参考
 
