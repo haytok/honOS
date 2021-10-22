@@ -1,13 +1,13 @@
 1  自作 OS HonOS
-2
-3
-4
-5
-6
-7
-8
-9
-10
+2  ゼロからのOS自作入門を読んで OS を実装してみた
+3  hppts://hakiwata.jp/post/20211018/
+4  自作 OS 日記 (1)
+5  https://hakiwata.jp/post/20210830/
+6  自作 OS 日記 (2)
+7  https://hakiwata.jp/post/20210831/
+8  自作 OS 日記 (3)
+9  https://hakiwata.jp/post/20210901/
+10 
 11
 12
 13
